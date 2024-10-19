@@ -11,6 +11,7 @@ import (
 	"github.com/brantem/scorecard/handler"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -53,6 +54,11 @@ func main() {
 
 	app.Use(pprof.New())
 
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:  "*",
+		AllowHeaders:  "Content-Type",
+		ExposeHeaders: "X-Total-Count",
+	}))
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
