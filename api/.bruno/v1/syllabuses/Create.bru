@@ -1,0 +1,18 @@
+meta {
+  name: Create
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/v1/syllabuses
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "structureId": 1,
+    "title": "Syllabus 1"
+  }
+}
