@@ -8,6 +8,7 @@ import (
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -89,6 +90,10 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 	if userID := c.Params("userId"); userID != "" {
 		_, err := h.db.ExecContext(c.UserContext(), `UPDATE users SET name = ? WHERE id = ?`, body.Name, userID)
 		if err != nil {
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "NAME_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("user.saveUser")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
@@ -96,6 +101,10 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 	} else {
 		_, err := h.db.ExecContext(c.UserContext(), `INSERT INTO users (name) VALUES (?)`, body.Name)
 		if err != nil {
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "NAME_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("user.saveUser")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
