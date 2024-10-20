@@ -64,8 +64,8 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 	}
 
 	var body struct {
-		PrevID *string `json:"prevId"`
-		Title  string  `json:"title"`
+		PrevID *int   `json:"prevId"`
+		Title  string `json:"title"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
