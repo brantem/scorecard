@@ -136,7 +136,7 @@ function Syllabuses() {
                     <Tree.Item
                       className={cn(
                         'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
-                        parent && 'ml-[26px]',
+                        parent && 'ml-[calc(theme(spacing.8)+2px)]',
                       )}
                       asChild
                     >

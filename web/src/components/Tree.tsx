@@ -33,7 +33,7 @@ function TreeItem<T extends TreeItem>({ item, renderAdd }: TreeItemProps<T>) {
   const m = useContext(TreeContext);
 
   return (
-    <div className={cn('relative flex flex-col gap-2 text-sm', item?.parentId && 'ml-[26px]')}>
+    <div className={cn('relative flex flex-col gap-2 text-sm', item?.parentId && 'ml-[calc(theme(spacing.8)+2px)]')}>
       {item ? (
         <>
           <TreeInnerItem>{item.title}</TreeInnerItem>
