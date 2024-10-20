@@ -25,21 +25,19 @@ func (h *Handler) Register(r *fiber.App) {
 		structures := syllabuses.Group("/structures")
 		structures.Get("/", h.syllabusStructures)
 		structures.Put("/:structureId<int>?", h.saveSyllabusStructure)
-		structures.Delete("/:structureId<int>", h.deleteSyllabusStructure)
+		structures.Delete("/:structureId", h.deleteSyllabusStructure)
 
 		syllabuses.Get("/", h.syllabuses)
 		syllabuses.Put("/:syllabusId<int>?", h.saveSyllabus)
-
-		syllabusID := syllabuses.Group("/:syllabusId<int>")
-		syllabusID.Delete("/", h.deleteSyllabus)
-
-		scores := syllabusID.Group("/scores")
-		scores.Get("/", h.scores)
-		scores.Put("/:userId<int>", h.saveScore)
+		syllabuses.Delete("/:syllabusId", h.deleteSyllabus)
 	}
+
+	scores := syllabuses.Group("/:syllabusId<int>/scores")
+	scores.Get("/", h.scores)
+	scores.Put("/:userId<int>", h.saveScore)
 
 	structures := v1.Group("/structures")
 	structures.Get("/", h.structures)
 	structures.Put("/:structureId<int>?", h.saveStructure)
-	structures.Delete("/:structureId<int>", h.deleteStructure)
+	structures.Delete("/:structureId", h.deleteStructure)
 }

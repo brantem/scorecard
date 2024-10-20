@@ -101,13 +101,24 @@ func (h *Handler) deleteStructure(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
-	_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures WHERE id = ?`, c.Params("structureId"))
-	if err != nil {
-		log.Error().Err(err).Msg("structure.deleteStructure")
-		result.Error = constant.RespInternalServerError
-		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	structureID := c.Params("structureId")
+	if structureID == "all" {
+		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures`)
+		if err != nil {
+			log.Error().Err(err).Msg("structure.deleteStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		result.Success = true
+	} else if v, err := strconv.Atoi(structureID); err == nil {
+		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures WHERE id = ?`, v)
+		if err != nil {
+			log.Error().Err(err).Msg("structure.deleteStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		result.Success = true
 	}
 
-	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
 }
