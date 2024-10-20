@@ -51,7 +51,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
     <Modal
       title={`Add ${data?.structure.title}`}
       description={
-        data?.structure.prevId && data.parent ? (
+        data?.parent ? (
           <>
             This will be added under <b>{data.parent.title}</b>
           </>

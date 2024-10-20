@@ -145,9 +145,9 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 	}
 
 	var body struct {
-		ParentID   *int   `json:"parentID"`
-		Title      string `json:"title"`
-		SyllabusID *int   `json:"syllabusID"`
+		ParentID   *int    `json:"parentId"`
+		Title      *string `json:"title"`
+		SyllabusID *int    `json:"syllabusId"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		log.Error().Err(err).Msg("structure.saveStructure")
@@ -155,12 +155,37 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	if structureID := c.Params("structureID"); structureID != "" {
+	structureID := c.Params("structureID")
+
+	if body.Title == nil && body.SyllabusID == nil {
+		result.Error = fiber.Map{
+			"title":      "REQUIRED",
+			"syllabusId": "REQUIRED",
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(result)
+	}
+
+	if structureID != "" {
+		if body.Title == nil {
+			result.Error = fiber.Map{"title": "REQUIRED"}
+			return c.Status(fiber.StatusBadRequest).JSON(result)
+		}
+
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE structures
-			SET parent_id = ?, title = ?, syllabus_id,
+			SET parent_id = ?, title = ?
 			WHERE id = ?
-		`, body.ParentID, body.Title, body.SyllabusID, structureID)
+		`, body.ParentID, body.Title, structureID)
+		if err != nil {
+			log.Error().Err(err).Msg("structure.saveStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+	} else if body.SyllabusID != nil {
+		_, err := h.db.ExecContext(c.Context(), `
+			INSERT INTO structures (parent_id, title, syllabus_id)
+			VALUES (?, (SELECT title from syllabuses WHERE id = ?), ?)
+		`, body.ParentID, body.SyllabusID, body.SyllabusID)
 		if err != nil {
 			log.Error().Err(err).Msg("structure.saveStructure")
 			result.Error = constant.RespInternalServerError
@@ -168,9 +193,9 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 		}
 	} else {
 		_, err := h.db.ExecContext(c.Context(), `
-			INSERT INTO structures (parent_id, title, syllabus_id)
-			VALUES (?, ?, ?)
-		`, body.ParentID, body.Title, body.SyllabusID)
+			INSERT INTO structures (parent_id, title)
+			VALUES (?, ?)
+		`, body.ParentID, body.Title)
 		if err != nil {
 			log.Error().Err(err).Msg("structure.saveStructure")
 			result.Error = constant.RespInternalServerError

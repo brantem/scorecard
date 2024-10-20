@@ -21,11 +21,11 @@ export type SaveStructureModalHandle = {
 export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [prev, setPrev] = useState<Structure | null>(null);
+  const [data, setData] = useState<{ prev: Structure | null } | null>(null);
 
   useImperativeHandle(ref, () => ({
     onOpen(prev) {
-      setPrev(prev);
+      setData({ prev });
     },
   }));
 
@@ -37,7 +37,7 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
   useEffect(() => {
     if (!fetcher.data) return;
     if (fetcher.data.success) {
-      setPrev(null);
+      setData(null);
       reset();
     } else {
       if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE') {
@@ -51,23 +51,24 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
     <Modal
       title="Add Structure"
       description={
-        prev ? (
+        data?.prev ? (
           <>
-            The new structure will be added after <b>{prev.title}</b>
+            The new structure will be added after <b>{data.prev.title}</b>
           </>
         ) : null
       }
       className="max-w-md"
-      isOpen={!!prev}
-      onClose={() => setPrev(null)}
+      isOpen={!!data}
+      onClose={() => setData(null)}
     >
       <form
         className="mt-4"
         onSubmit={handleSubmit((values) => {
+          if (!data) return;
           fetcher.submit(
             {
               type: 'SAVE_STRUCTURE',
-              prevId: prev ? prev.id : null,
+              prevId: data.prev?.id || null,
               ...values,
             },
             { method: 'PUT', encType: 'application/json' },

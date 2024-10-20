@@ -1,14 +1,14 @@
 import { useRef } from 'react';
 import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 
-import Tree from 'components/Tree';
+import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
+import Tree from 'components/Tree';
 import SaveStructureModal, { type SaveStructureModalHandle } from './SaveStructureModal';
 import SaveSyllabusModal, { type SaveSyllabusModalHandle } from './SaveSyllabusModal';
 
 import { cn } from 'lib/helpers';
 import type { Structure, Syllabus } from './types';
-import Button from 'components/Button';
 
 function Syllabuses() {
   const data = useLoaderData() as { structures: Structure[]; syllabuses: Syllabus[] };
@@ -38,12 +38,20 @@ function Syllabuses() {
 
             {!data.syllabuses.length ? (
               <Button
-                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
+                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
                 onClick={() => {
                   fetcher.submit({ type: 'RESET_SYLLABUS' }, { method: 'DELETE', encType: 'application/json' });
                 }}
               >
-                Reset
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
+                  <path
+                    fillRule="evenodd"
+                    d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+
+                <span>Reset</span>
               </Button>
             ) : null}
           </div>
@@ -56,7 +64,7 @@ function Syllabuses() {
             <div className="relative">
               <button
                 className={cn(
-                  'relative z-10 flex items-center justify-center rounded-full bg-neutral-900 text-white hover:bg-neutral-700 disabled:bg-neutral-200 disabled:text-neutral-400',
+                  'relative z-10 flex items-center justify-center rounded-full bg-neutral-900 text-white hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-400',
                   data.structures.length ? 'size-10' : 'h-10 gap-2 px-3',
                 )}
                 onClick={() => saveStructureModalRef.current?.onOpen(lastStructure)}
@@ -97,12 +105,20 @@ function Syllabuses() {
             <h2>Syllabuses</h2>
 
             <Button
-              className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
+              className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
               onClick={() => {
                 fetcher.submit({ type: 'RESET_SYLLABUS' }, { method: 'DELETE', encType: 'application/json' });
               }}
             >
-              Reset
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
+                <path
+                  fillRule="evenodd"
+                  d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+
+              <span>Reset</span>
             </Button>
           </div>
 
@@ -119,13 +135,21 @@ function Syllabuses() {
                   return (
                     <Tree.Item
                       className={cn(
-                        'min-w-0 border-neutral-800 bg-neutral-900 text-white hover:bg-neutral-700',
+                        'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
                         parent && 'ml-[26px]',
                       )}
                       asChild
                     >
                       <button onClick={() => saveSyllabusModalRef.current?.onOpen(structure, parent)}>
-                        Add {structure.title}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="size-5"
+                        >
+                          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                        </svg>
+                        <span>Add {structure.title}</span>
                       </button>
                     </Tree.Item>
                   );
@@ -135,10 +159,13 @@ function Syllabuses() {
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2">
               <Button
-                className="text-sm"
+                className="pl-2.5 text-sm"
                 onClick={() => saveSyllabusModalRef.current?.onOpen(structures.get(null), null)}
               >
-                Add {structures.get(null).title}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                </svg>
+                <span>Add {structures.get(null).title}</span>
               </Button>
             </div>
           )}
