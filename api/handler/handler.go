@@ -38,6 +38,7 @@ func (h *Handler) Register(r *fiber.App) {
 
 	structures := v1.Group("/structures")
 	structures.Get("/", h.structures)
+	structures.Post("/generate", h.generateStructures)
 	structures.Put("/:structureId<int>?", h.saveStructure)
 	structures.Delete("/:structureId", h.deleteStructure)
 }

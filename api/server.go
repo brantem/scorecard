@@ -67,9 +67,7 @@ func main() {
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: isDebug,
 	}))
-	app.Use(logger.New(logger.Config{
-		Output: log.Logger,
-	}))
+	app.Use(logger.New())
 
 	h := handler.New(db)
 	h.Register(app)
