@@ -16,11 +16,13 @@ const router = createBrowserRouter([
       {
         path: 'users',
         loader: Users.loader,
+        action: Users.action,
         element: <Users />,
       },
       {
         path: 'syllabuses',
         loader: Syllabuses.loader,
+        action: Syllabuses.action,
         element: <Syllabuses />,
       },
       {
