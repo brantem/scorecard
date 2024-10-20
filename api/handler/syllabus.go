@@ -8,6 +8,7 @@ import (
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -20,21 +21,19 @@ func (h *Handler) syllabusStructures(c *fiber.Ctx) error {
 
 	rows, err := h.db.QueryxContext(c.Context(), `
 		WITH RECURSIVE t AS (
-		  SELECT
-		    id,
-		    prev_id,
-		    title
+		  SELECT *
 		  FROM syllabus_structures
 		  WHERE prev_id IS NULL
 		  UNION ALL
-		  SELECT
-		    s.id,
-		    s.prev_id,
-		    s.title
+		  SELECT s.*
 		  FROM syllabus_structures s
 		  INNER JOIN t ON s.prev_id = t.id
 		)
-		SELECT id, title FROM t
+		SELECT id, prev_id, title FROM t
+		UNION
+		SELECT id, prev_id, title
+		FROM syllabus_structures
+		WHERE prev_id = -1
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabusStructures")
@@ -50,6 +49,7 @@ func (h *Handler) syllabusStructures(c *fiber.Ctx) error {
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
+
 		result.Nodes = append(result.Nodes, &node)
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
@@ -85,15 +85,41 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err := h.db.ExecContext(c.Context(), `
+		tx := h.db.MustBeginTx(c.Context(), nil)
+
+		// even if this record isn't inserted due to the conflict, the sequence will still increment.
+		_, err := tx.ExecContext(c.Context(), `
 			INSERT INTO syllabus_structures (prev_id, title)
-			VALUES (?, ?)
+			VALUES (-1, 'Assignment')
+			ON CONFLICT (title) DO NOTHING
 		`, body.PrevID, body.Title)
 		if err != nil {
+			tx.Rollback()
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
+
+		_, err = tx.ExecContext(c.Context(), `
+			INSERT INTO syllabus_structures (prev_id, title)
+			VALUES (?, ?)
+		`, body.PrevID, body.Title)
+		if err != nil {
+			tx.Rollback()
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
+			log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+
+		tx.Commit()
 	}
 
 	result.Success = true
@@ -106,7 +132,23 @@ func (h *Handler) deleteSyllabusStructure(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
-	if _, err := h.db.ExecContext(c.Context(), `DELETE FROM syllabus_structures WHERE id = ?`, c.Params("structureId")); err != nil {
+	_, err := h.db.ExecContext(c.Context(), `
+		WITH t AS (
+		  SELECT id FROM syllabus_structures
+		)
+		DELETE FROM syllabus_structures
+		WHERE id IN (
+		  SELECT
+		    CASE WHEN (SELECT COUNT(*) FROM t) = 2
+		      THEN id
+		      ELSE ?
+		    END
+		  FROM t
+		  UNION ALL
+		  SELECT ? WHERE (SELECT COUNT(*) FROM t) != 2
+		)
+	`, c.Params("structureId"), c.Params("structureId"))
+	if err != nil {
 		log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
@@ -154,7 +196,7 @@ func (h *Handler) syllabuses(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.Syllabus{}
 
-	rows, err := h.db.QueryxContext(c.Context(), `SELECT id, structure_id, title FROM syllabuses`)
+	rows, err := h.db.QueryxContext(c.Context(), `SELECT id, parent_id, structure_id, title FROM syllabuses`)
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabuses")
 		result.Error = constant.RespInternalServerError
@@ -183,6 +225,7 @@ func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 	}
 
 	var body struct {
+		ParentID    *int   `json:"parentId"`
 		StructureID int    `json:"structureId"`
 		Title       string `json:"title"`
 	}
@@ -195,9 +238,9 @@ func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 	if syllabusID := c.Params("syllabusID"); syllabusID != "" {
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE syllabuses
-			SET title = ?
+			SET parent_id = ?, title = ?
 			WHERE id = ?
-		`, body.Title, syllabusID)
+		`, body.ParentID, body.Title, syllabusID)
 		if err != nil {
 			log.Error().Err(err).Msg("syllabus.saveSyllabus")
 			result.Error = constant.RespInternalServerError
@@ -205,9 +248,9 @@ func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 		}
 	} else {
 		_, err := h.db.ExecContext(c.Context(), `
-			INSERT INTO syllabuses (structure_id, title)
-			VALUES (?, ?)
-		`, body.StructureID, body.Title)
+			INSERT INTO syllabuses (parent_id, structure_id, title)
+			VALUES (?, ?, ?)
+		`, body.ParentID, body.StructureID, body.Title)
 		if err != nil {
 			log.Error().Err(err).Msg("syllabus.saveSyllabus")
 			result.Error = constant.RespInternalServerError
