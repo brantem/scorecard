@@ -28,6 +28,7 @@ const router = createBrowserRouter([
       {
         path: 'structures',
         loader: Structures.loader,
+        action: Structures.action,
         element: <Structures />,
       },
     ],

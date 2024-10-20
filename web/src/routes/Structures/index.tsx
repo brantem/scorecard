@@ -1,4 +1,4 @@
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 
 import Tree from 'components/Tree';
 import Button from 'components/Button';
@@ -13,6 +13,8 @@ type Structure = {
 
 function Structures() {
   const data = useLoaderData() as { structures: Structure[] };
+  const fetcher = useFetcher();
+
   const structures = new Map();
   data.structures.forEach((structure) => {
     structures.set(structure.parentId, [...(structures.get(structure.parentId) || []), structure]);
@@ -23,7 +25,10 @@ function Structures() {
       {data.structures.length ? (
         <>
           <div className="absolute right-4 top-4 flex items-start">
-            <Button className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 text-sm text-red-400 hover:bg-red-100 hover:text-red-500">
+            <Button
+              className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
+              onClick={() => fetcher.submit({ type: 'RESET' }, { method: 'DELETE', encType: 'application/json' })}
+            >
               Reset
             </Button>
           </div>
@@ -48,8 +53,11 @@ function Structures() {
           <span>Start building the structures for the Scorecard</span>
 
           <div className="flex items-center gap-2">
-            <Button className="text-sm" onClick={() => alert('TODO')}>
-              Copy from Syllabuses
+            <Button
+              className="text-sm"
+              onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+            >
+              Generate from Syllabuses
             </Button>
             <span>Or</span>
             <Button className="text-sm" onClick={() => alert('TODO')}>
@@ -63,8 +71,33 @@ function Structures() {
 }
 
 Structures.loader = async () => {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures`);
-  return { structures: (await res.json()).nodes };
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures`);
+    return { structures: (await res.json()).nodes };
+  } catch {
+    return { structures: [] };
+  }
+};
+
+Structures.action = async ({ request }: ActionFunctionArgs) => {
+  try {
+    const { type } = await request.json();
+
+    let res;
+    switch (type) {
+      case 'GENERATE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures/generate`, { method: 'POST' });
+        break;
+      case 'RESET':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures/all`, { method: 'DELETE' });
+        break;
+      default:
+        return { success: false, error: null };
+    }
+    return await res.json();
+  } catch {
+    return { success: false, error: { code: 'INTERNAL_SERVER_ERROR' } };
+  }
 };
 
 export default Structures;

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useFetcher, useLoaderData, type ActionFunctionArgs } from 'react-router-dom';
+import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 
 import Tree from 'components/Tree';
 import Tooltip from 'components/Tooltip';
