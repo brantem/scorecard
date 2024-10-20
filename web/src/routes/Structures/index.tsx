@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 
 import Button from 'components/Button';
@@ -6,11 +6,11 @@ import Tree from 'components/Tree';
 import AddStructureModal, { type AddStructureModalHandle } from './AddStructureModal';
 
 import { cn } from 'lib/helpers';
-import type { Structure } from './types';
+import type { Structure } from 'types';
 
 function Structures() {
   const data = useLoaderData() as { structures: Structure[] };
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ error: { code: string | null } | null }>();
 
   const addStructureModalRef = useRef<AddStructureModalHandle>(null);
 
@@ -18,6 +18,11 @@ function Structures() {
   data.structures.forEach((structure) => {
     structures.set(structure.parentId, [...(structures.get(structure.parentId) || []), structure]);
   });
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if (fetcher.data.error?.code) alert(fetcher.data.error?.code);
+  }, [fetcher.data]);
 
   return (
     <>

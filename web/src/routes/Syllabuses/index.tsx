@@ -8,10 +8,10 @@ import SaveStructureModal, { type SaveStructureModalHandle } from './SaveStructu
 import SaveSyllabusModal, { type SaveSyllabusModalHandle } from './SaveSyllabusModal';
 
 import { cn } from 'lib/helpers';
-import type { Structure, Syllabus } from './types';
+import type { SyllabusStructure, Syllabus } from 'types';
 
 function Syllabuses() {
-  const data = useLoaderData() as { structures: Structure[]; syllabuses: Syllabus[] };
+  const data = useLoaderData() as { structures: SyllabusStructure[]; syllabuses: Syllabus[] };
   const fetcher = useFetcher();
 
   const saveStructureModalRef = useRef<SaveStructureModalHandle>(null);

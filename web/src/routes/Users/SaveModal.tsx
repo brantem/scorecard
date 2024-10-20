@@ -39,7 +39,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
       reset();
     } else {
       if (fetcher.data.error?.code === 'NAME_SHOULD_BE_UNIQUE') setError('name', { message: 'Name should be unique.' });
-      alert(fetcher.data.error?.code);
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
     }
   }, [fetcher.data]);
 
@@ -49,7 +49,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
         className="mt-4"
         onSubmit={handleSubmit((values) => fetcher.submit(values, { method: 'PUT', encType: 'application/json' }))}
       >
-        <Input label="Name" {...register('name')} error={formState.errors.name?.message} required />
+        <Input label="Name" {...register('name')} error={formState.errors.name?.message} required autoFocus />
 
         <Button type="submit" className="mt-4 h-12 w-full" disabled={!formState.isValid}>
           Save

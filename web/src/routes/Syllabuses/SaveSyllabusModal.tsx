@@ -8,20 +8,20 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { Structure, Syllabus } from './types';
+import type { SyllabusStructure, Syllabus } from 'types';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
 });
 
 export type SaveSyllabusModalHandle = {
-  onOpen(structure: Structure, parent: Syllabus | null): void;
+  onOpen(structure: SyllabusStructure, parent: Syllabus | null): void;
 };
 
 export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [data, setData] = useState<{ structure: Structure; parent: Syllabus | null } | null>(null);
+  const [data, setData] = useState<{ structure: SyllabusStructure; parent: Syllabus | null } | null>(null);
 
   useImperativeHandle(ref, () => ({
     onOpen(structure, parent) {
@@ -43,7 +43,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
       if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE') {
         setError('title', { message: 'Title should be unique.' });
       }
-      alert(fetcher.data.error?.code);
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
     }
   }, [fetcher.data]);
 
@@ -76,7 +76,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
           );
         })}
       >
-        <Input label="Title" {...register('title')} error={formState.errors.title?.message} required />
+        <Input label="Title" {...register('title')} error={formState.errors.title?.message} required autoFocus />
 
         <Button type="submit" className="mt-4 h-12 w-full" disabled={!formState.isValid}>
           Save

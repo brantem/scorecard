@@ -2,9 +2,10 @@ import { forwardRef, useImperativeHandle, useState } from 'react';
 
 import Modal from 'components/Modal';
 import SaveStructureForm from './SaveStructureForm';
+import SyllabusList from './SyllabusList';
 import Button from 'components/Button';
 
-import type { Structure } from './types';
+import type { Structure } from 'types';
 
 export type AddStructureModalHandle = {
   onOpen(parent: Structure | null): void;
@@ -34,6 +35,7 @@ export default forwardRef<AddStructureModalHandle>(function AddStructureModal(_,
           'You can create a structure manually or by copying data from a syllabus'
         )
       }
+      className={isManual === false ? 'max-w-4xl' : ''}
       isOpen={!!data}
       onClose={() => {
         setIsManual(null);
@@ -44,7 +46,7 @@ export default forwardRef<AddStructureModalHandle>(function AddStructureModal(_,
         isManual ? (
           <SaveStructureForm parentId={data?.parent?.id || null} onCompleted={() => setData(null)} />
         ) : (
-          'TODO'
+          <SyllabusList parentId={data?.parent?.id || null} onCompleted={() => setData(null)} />
         )
       ) : (
         <div className="mt-4 flex w-full items-center gap-4">

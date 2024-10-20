@@ -19,7 +19,7 @@ type SaveStructureFormProps = {
 export default function SaveStructureForm({ parentId, onCompleted }: SaveStructureFormProps) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const { register, handleSubmit, formState, setError, reset } = useForm({
+  const { register, handleSubmit, formState } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { title: '' },
   });
@@ -28,12 +28,8 @@ export default function SaveStructureForm({ parentId, onCompleted }: SaveStructu
     if (!fetcher.data) return;
     if (fetcher.data.success) {
       onCompleted();
-      reset();
     } else {
-      if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE') {
-        setError('title', { message: 'Title should be unique.' });
-      }
-      alert(fetcher.data.error?.code);
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
     }
   }, [fetcher.data]);
 
@@ -44,7 +40,7 @@ export default function SaveStructureForm({ parentId, onCompleted }: SaveStructu
         fetcher.submit({ type: 'SAVE', parentId, ...values }, { method: 'PUT', encType: 'application/json' });
       })}
     >
-      <Input label="Title" {...register('title')} error={formState.errors.title?.message} required />
+      <Input label="Title" {...register('title')} error={formState.errors.title?.message} required autoFocus />
 
       <Button type="submit" className="mt-4 h-12 w-full" disabled={!formState.isValid}>
         Save
