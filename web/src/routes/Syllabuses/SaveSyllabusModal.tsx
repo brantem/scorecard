@@ -29,7 +29,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
     },
   }));
 
-  const { register, handleSubmit, formState, setError } = useForm({
+  const { register, handleSubmit, formState, setError, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { title: '' },
   });
@@ -38,9 +38,11 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
     if (!fetcher.data) return;
     if (fetcher.data.success) {
       setData(null);
+      reset();
     } else {
-      if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE')
+      if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE') {
         setError('title', { message: 'Title should be unique.' });
+      }
       alert(fetcher.data.error?.code);
     }
   }, [fetcher.data]);

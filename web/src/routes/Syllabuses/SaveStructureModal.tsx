@@ -29,7 +29,7 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
     },
   }));
 
-  const { register, handleSubmit, formState, setError } = useForm({
+  const { register, handleSubmit, formState, setError, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { title: '' },
   });
@@ -38,9 +38,11 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
     if (!fetcher.data) return;
     if (fetcher.data.success) {
       setPrev(null);
+      reset();
     } else {
-      if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE')
+      if (fetcher.data.error?.code === 'TITLE_SHOULD_BE_UNIQUE') {
         setError('title', { message: 'Title should be unique.' });
+      }
       alert(fetcher.data.error?.code);
     }
   }, [fetcher.data]);
@@ -63,7 +65,11 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
         className="mt-4"
         onSubmit={handleSubmit((values) => {
           fetcher.submit(
-            { type: 'SAVE_STRUCTURE', prevId: prev ? prev.id : null, ...values },
+            {
+              type: 'SAVE_STRUCTURE',
+              prevId: prev ? prev.id : null,
+              ...values,
+            },
             { method: 'PUT', encType: 'application/json' },
           );
         })}

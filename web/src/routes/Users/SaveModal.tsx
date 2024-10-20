@@ -27,7 +27,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
     },
   }));
 
-  const { register, handleSubmit, formState, setError } = useForm({
+  const { register, handleSubmit, formState, setError, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { name: '' },
   });
@@ -36,6 +36,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
     if (!fetcher.data) return;
     if (fetcher.data.success) {
       setIsOpen(false);
+      reset();
     } else {
       if (fetcher.data.error?.code === 'NAME_SHOULD_BE_UNIQUE') setError('name', { message: 'Name should be unique.' });
       alert(fetcher.data.error?.code);
@@ -46,9 +47,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
     <Modal title="Add User" className="max-w-md" isOpen={isOpen} onClose={() => setIsOpen(false)}>
       <form
         className="mt-4"
-        onSubmit={handleSubmit((values) => {
-          fetcher.submit(values, { method: 'PUT', encType: 'application/json' });
-        })}
+        onSubmit={handleSubmit((values) => fetcher.submit(values, { method: 'PUT', encType: 'application/json' }))}
       >
         <Input label="Name" {...register('name')} error={formState.errors.name?.message} required />
 
