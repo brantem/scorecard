@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,8 +9,45 @@ import (
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
+
+func (h *Handler) getScorecardStructureSyllabuses(ctx context.Context, ids []int) (map[int]*model.ScorecardStructureSyllabus, error) {
+	if len(ids) == 0 {
+		return make(map[int]*model.ScorecardStructureSyllabus), nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT s.id, s.title, COALESCE(ss.prev_id, 0) = -1 AS is_assignment
+		FROM syllabuses s
+		JOIN syllabus_structures ss ON ss.id = s.structure_id
+		WHERE s.id IN (?)
+	`, ids)
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.getScorecardStructureSyllabuses")
+		return nil, constant.ErrInternalServerError
+	}
+
+	rows, err := h.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.getScorecardStructureSyllabuses")
+		return nil, constant.ErrInternalServerError
+	}
+	defer rows.Close()
+
+	m := make(map[int]*model.ScorecardStructureSyllabus, len(ids))
+	for rows.Next() {
+		var syllabus model.ScorecardStructureSyllabus
+		if err := rows.StructScan(&syllabus); err != nil {
+			log.Error().Err(err).Msg("syllabus.getScorecardStructureSyllabuses")
+			return nil, constant.ErrInternalServerError
+		}
+		m[syllabus.ID] = &syllabus
+	}
+
+	return m, nil
+}
 
 func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	var result struct {
@@ -41,7 +79,7 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	syllabuses, err := h.getSyllabuses(c.Context(), syllabusIds)
+	syllabuses, err := h.getScorecardStructureSyllabuses(c.Context(), syllabusIds)
 	if err == nil {
 		for _, node := range result.Nodes {
 			if node.SyllabusID != nil {

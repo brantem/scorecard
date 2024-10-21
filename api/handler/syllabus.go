@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
@@ -167,37 +165,6 @@ func (h *Handler) deleteSyllabusStructure(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
-}
-
-func (h *Handler) getSyllabuses(ctx context.Context, ids []int) (map[int]*model.Syllabus, error) {
-	if len(ids) == 0 {
-		return make(map[int]*model.Syllabus), nil
-	}
-
-	query, args, err := sqlx.In(`SELECT id, title FROM syllabuses WHERE id IN (?)`, ids)
-	if err != nil {
-		log.Error().Err(err).Msg("syllabus.syllabuses")
-		return nil, constant.ErrInternalServerError
-	}
-
-	rows, err := h.db.QueryxContext(ctx, query, args...)
-	if err != nil {
-		log.Error().Err(err).Msg("syllabus.syllabuses")
-		return nil, constant.ErrInternalServerError
-	}
-	defer rows.Close()
-
-	m := make(map[int]*model.Syllabus, len(ids))
-	for rows.Next() {
-		var syllabus model.Syllabus
-		if err := rows.StructScan(&syllabus); err != nil {
-			log.Error().Err(err).Msg("syllabus.syllabuses")
-			return nil, constant.ErrInternalServerError
-		}
-		m[syllabus.ID] = &syllabus
-	}
-
-	return m, nil
 }
 
 func (h *Handler) syllabuses(c *fiber.Ctx) error {

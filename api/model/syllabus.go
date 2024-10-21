@@ -14,5 +14,5 @@ type BaseSyllabus struct {
 type Syllabus struct {
 	BaseSyllabus
 	ParentID    *int `json:"parentId" db:"parent_id"`
-	StructureID *int `json:"structureId,omitempty" db:"structure_id"`
+	StructureID *int `json:"structureId" db:"structure_id"`
 }
