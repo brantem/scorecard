@@ -78,6 +78,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
         <Input
           label="Score"
           type="number"
+          step=".01"
           {...register('score', { valueAsNumber: true })}
           error={formState.errors.score?.message}
           required
