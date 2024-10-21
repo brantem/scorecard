@@ -45,5 +45,8 @@ func (h *Handler) Register(r *fiber.App) {
 		structures.Post("/copy/:syllabusId<int>", h.copySyllabusesIntoStructures)
 		structures.Put("/:structureId<int>?", h.saveScorecardStructure)
 		structures.Delete("/:structureId", h.deleteScorecardStructure)
+
+		scorecards.Get("/", h.scorecards)
+		scorecards.Get("/:scorecardId<int>", h.scorecard)
 	}
 }

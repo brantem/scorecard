@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
@@ -49,6 +50,8 @@ func (h *Handler) getScorecardStructureSyllabuses(ctx context.Context, ids []int
 	return m, nil
 }
 
+// ?depth int
+
 func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	var result struct {
 		Nodes []*model.ScorecardStructure `json:"nodes"`
@@ -56,7 +59,21 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.ScorecardStructure{}
 
-	rows, err := h.db.QueryxContext(c.Context(), `SELECT id, parent_id, title, syllabus_id FROM structures`)
+	depth := c.QueryInt("depth")
+
+	rows, err := h.db.QueryxContext(c.Context(), `
+		WITH RECURSIVE t AS (
+		  SELECT *, 1 AS depth
+		  FROM scorecard_structures
+		  WHERE parent_id IS NULL
+		  UNION ALL
+		  SELECT ss.*, t.depth + 1
+		  FROM scorecard_structures ss
+		  JOIN t ON ss.parent_id = t.id
+		  WHERE (? = 0 OR t.depth < ?)
+		)
+		SELECT id, parent_id, title FROM t
+	`, depth, depth)
 	if err != nil {
 		log.Error().Err(err).Msg("scorecard.scorecardStructures")
 		result.Error = constant.RespInternalServerError
@@ -176,7 +193,7 @@ func (h *Handler) copySyllabusesIntoStructures(c *fiber.Ctx) error {
 
 	tx := h.db.MustBeginTx(c.Context(), nil)
 
-	rows, err := tx.QueryContext(c.Context(), fmt.Sprintf(`INSERT INTO structures (title, syllabus_id) %s RETURNING id, syllabus_id`, query), args...)
+	rows, err := tx.QueryContext(c.Context(), fmt.Sprintf(`INSERT INTO scorecard_structures (title, syllabus_id) %s RETURNING id, syllabus_id`, query), args...)
 	if err != nil {
 		tx.Rollback()
 		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
@@ -218,10 +235,10 @@ func (h *Handler) copySyllabusesIntoStructures(c *fiber.Ctx) error {
 		WITH t(id, parent_id) AS (
 		  VALUES %s
 		)
-		UPDATE structures
+		UPDATE scorecard_structures
 		SET parent_id = t.parent_id
 		FROM t
-		WHERE structures.id = t.id
+		WHERE scorecard_structures.id = t.id
 	`, strings.Join(values, ", ")))
 	if err != nil {
 		tx.Rollback()
@@ -256,7 +273,7 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 
 	if structureID != "" {
 		_, err := h.db.ExecContext(c.Context(), `
-			UPDATE structures
+			UPDATE scorecard_structures
 			SET parent_id = ?, title = ?
 			WHERE id = ?
 		`, body.ParentID, body.Title, structureID)
@@ -267,7 +284,7 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 		}
 	} else {
 		_, err := h.db.ExecContext(c.Context(), `
-			INSERT INTO structures (parent_id, title)
+			INSERT INTO scorecard_structures (parent_id, title)
 			VALUES (?, ?)
 		`, body.ParentID, body.Title)
 		if err != nil {
@@ -289,7 +306,7 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 
 	structureID := c.Params("structureId")
 	if structureID == "all" {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures`)
+		_, err := h.db.ExecContext(c.Context(), `DELETE FROM scorecard_structures`)
 		if err != nil {
 			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
@@ -297,7 +314,7 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 		}
 		result.Success = true
 	} else if v, err := strconv.Atoi(structureID); err == nil {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures WHERE id = ?`, v)
+		_, err := h.db.ExecContext(c.Context(), `DELETE FROM scorecard_structures WHERE id = ?`, v)
 		if err != nil {
 			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
@@ -305,6 +322,108 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 		}
 		result.Success = true
 	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) scorecards(c *fiber.Ctx) error {
+	var result struct {
+		Nodes []*model.Scorecard `json:"nodes"`
+		Error any                `json:"error"`
+	}
+	result.Nodes = []*model.Scorecard{}
+
+	rows, err := h.db.QueryxContext(c.Context(), `
+		SELECT id, user_id, score, is_outdated, generated_at
+		FROM scorecards
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("scorecard.scorecards")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	defer rows.Close()
+
+	var userIds []int
+	for rows.Next() {
+		var node model.Scorecard
+		if err := rows.StructScan(&node); err != nil {
+			log.Error().Err(err).Msg("scorecard.scorecards")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		result.Nodes = append(result.Nodes, &node)
+		userIds = append(userIds, node.UserID)
+	}
+	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
+
+	users, err := h.getUsers(c.Context(), userIds)
+	if err == nil {
+		for _, node := range result.Nodes {
+			node.User = users[node.UserID]
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) scorecard(c *fiber.Ctx) error {
+	var result struct {
+		Scorecard *model.Scorecard `json:"scorecard"`
+		Error     any              `json:"error"`
+	}
+
+	scorecardID, _ := c.ParamsInt("scorecardId")
+
+	scorecard := model.Scorecard{Items: []*model.ScorecardItem{}}
+	err := h.db.QueryRowxContext(c.Context(), `
+		SELECT id, user_id, score, is_outdated, generated_at
+		FROM scorecards
+		WHERE id = ?
+	`, scorecardID).StructScan(&scorecard)
+	if err != nil {
+		log.Error().Err(err).Msg("scorecard.scorecard")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	result.Scorecard = &scorecard
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		userID := result.Scorecard.UserID
+		users, _ := h.getUsers(c.Context(), []int{userID})
+		result.Scorecard.User = users[userID]
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		rows, err := h.db.QueryxContext(c.Context(), `
+			SELECT id, structure_id, score
+			FROM scorecard_items
+			WHERE scorecard_id = ?
+		`, result.Scorecard.ID)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.scorecard")
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var node model.ScorecardItem
+			if err := rows.StructScan(&node); err != nil {
+				continue
+			}
+			result.Scorecard.Items = append(result.Scorecard.Items, &node)
+		}
+	}()
+
+	wg.Wait()
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }

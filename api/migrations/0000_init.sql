@@ -74,21 +74,49 @@ BEGIN
   WHERE id = OLD.id;
 END;
 
-CREATE TABLE IF NOT EXISTS structures (
+CREATE TABLE IF NOT EXISTS scorecard_structures (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   parent_id INTEGER,
   title TEXT NOT NULL,
   syllabus_id INTEGER,
   created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (parent_id) REFERENCES structures(id) ON DELETE CASCADE,
+  updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (parent_id) REFERENCES scorecard_structures(id) ON DELETE CASCADE,
   FOREIGN KEY (syllabus_id) REFERENCES syllabuses(id) ON DELETE CASCADE
 );
 
 CREATE TRIGGER IF NOT EXISTS updated_at
-AFTER UPDATE ON structures
+AFTER UPDATE ON scorecard_structures
 FOR EACH ROW
 BEGIN
-  UPDATE structures
+  UPDATE scorecard_structures
   SET updated_at = CURRENT_TIMESTAMP
   WHERE id = OLD.id;
 END;
+
+CREATE TABLE IF NOT EXISTS scorecards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  score REAL NOT NULL,
+  is_outdated INTEGER NOT NULL,
+  generated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TRIGGER IF NOT EXISTS generated_at
+AFTER UPDATE ON scorecards
+FOR EACH ROW
+BEGIN
+  UPDATE scorecards
+  SET generated_at = CURRENT_TIMESTAMP
+  WHERE id = OLD.id;
+END;
+
+CREATE TABLE IF NOT EXISTS scorecard_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scorecard_id INTEGER NOT NULL,
+  structure_id INTEGER NOT NULL,
+  score REAL NOT NULL,
+  FOREIGN KEY (scorecard_id) REFERENCES scorecards(id) ON DELETE CASCADE,
+  FOREIGN KEY (structure_id) REFERENCES scorecard_structures(id) ON DELETE CASCADE
+);
