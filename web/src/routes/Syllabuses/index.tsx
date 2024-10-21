@@ -59,8 +59,8 @@ function Syllabuses() {
 
   return (
     <>
-      <div className="grid h-full grid-cols-4 items-center justify-center divide-x overflow-hidden">
-        <div className="relative flex h-full items-center justify-center p-4">
+      <div className="grid size-full grid-cols-1 items-center justify-center overflow-hidden max-lg:grid-rows-3 max-lg:divide-y lg:grid-cols-4 lg:divide-x">
+        <div className="relative flex size-full items-center justify-center p-4">
           <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
             <h2>Structures</h2>
 
@@ -184,7 +184,7 @@ function Syllabuses() {
           </div>
         </div>
 
-        <div className="relative col-span-3 h-full overflow-hidden">
+        <div className="relative size-full overflow-hidden max-lg:row-span-2 lg:col-span-3">
           <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
             <h2>Syllabuses</h2>
 
