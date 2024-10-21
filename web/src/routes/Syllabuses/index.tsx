@@ -40,14 +40,15 @@ function Syllabuses() {
   }, [fetcher.data]);
 
   const structures = new Map();
+  const prevStructures = new Map();
   data.structures.forEach((structure) => {
-    if (!structures.has(structure.id)) structures.set(structure.id, structure);
-    if (!structures.has(structure.prevId)) structures.set(structure.prevId, structure);
+    structures.set(structure.id, structure);
+    prevStructures.set(structure.prevId, structure);
   });
   const lastStructure = data.structures[data.structures.length - 1];
-  if (lastStructure) structures.set(lastStructure.id, structures.get(-1));
+  if (lastStructure) prevStructures.set(lastStructure.id, prevStructures.get(-1));
 
-  const assignmentStructure = structures.get(-1);
+  const assignmentStructure = prevStructures.get(-1);
 
   const syllabuses = new Map<number | null, Syllabus[]>();
   data.syllabuses.forEach((structure) => {
@@ -240,7 +241,7 @@ function Syllabuses() {
                     const structureId = parent?.structureId;
                     if (assignmentStructure && structureId === assignmentStructure.id) return null;
 
-                    const structure = parent ? structures.get(structureId) : structures.get(null);
+                    const structure = parent ? prevStructures.get(structureId) : prevStructures.get(null);
 
                     return (
                       <Tree.Item
@@ -270,12 +271,12 @@ function Syllabuses() {
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <Button
                   className="pl-2.5 text-sm"
-                  onClick={() => saveSyllabusModalRef.current?.onOpen(structures.get(null), null, null)}
+                  onClick={() => saveSyllabusModalRef.current?.onOpen(prevStructures.get(null), null, null)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
                     <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
                   </svg>
-                  <span>Add {structures.get(null).title}</span>
+                  <span>Add {prevStructures.get(null).title}</span>
                 </Button>
               </div>
             )
