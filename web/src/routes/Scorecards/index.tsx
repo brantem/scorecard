@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import { PlusIcon } from '@heroicons/react/20/solid';
+import { TrashIcon } from '@heroicons/react/16/solid';
 
 import Button from 'components/Button';
 import Tree from 'components/Tree';
@@ -52,14 +54,7 @@ function Scorecards() {
               className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
               onClick={() => resetModalRef.current?.onOpen('Scorecards', { type: 'RESET', _structureId: 'all' })}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
-                <path
-                  fillRule="evenodd"
-                  d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-
+              <TrashIcon className="size-4" />
               <span>Reset</span>
             </Button>
           ) : null}
@@ -99,14 +94,7 @@ function Scorecards() {
                     asChild
                   >
                     <button onClick={() => addModalRef.current?.onOpen(parent)}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="size-5"
-                      >
-                        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                      </svg>
+                      <PlusIcon className="size-5" />
                       <span>Add Structure</span>
                     </button>
                   </Tree.Item>

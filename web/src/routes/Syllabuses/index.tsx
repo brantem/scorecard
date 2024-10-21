@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useLoaderData, useFetcher, type ActionFunctionArgs, Link } from 'react-router-dom';
+import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/20/solid';
+import { TrashIcon } from '@heroicons/react/16/solid';
 
 import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
@@ -71,14 +74,7 @@ function Syllabuses() {
                   resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: 'all' });
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
-                  <path
-                    fillRule="evenodd"
-                    d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-
+                <TrashIcon className="size-4" />
                 <span>Reset</span>
               </Button>
             ) : null}
@@ -131,28 +127,13 @@ function Syllabuses() {
                 onClick={() => saveStructureModalRef.current?.onOpen(lastStructure, null)}
                 disabled={isStructuresLocked}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                </svg>
+                <PlusIcon className="size-5" />
                 {!data.structures.length ? <span>Structure</span> : null}
               </button>
 
               {isStructuresLocked ? (
                 <Tooltip content="You need to reset the syllabuses before updating the structures." side="right">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="absolute left-[calc(100%+theme(spacing.2))] top-2 size-6 text-yellow-500"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                    />
-                  </svg>
+                  <ExclamationTriangleIcon className="absolute left-[calc(100%+theme(spacing.2))] top-2 size-6 text-yellow-500" />
                 </Tooltip>
               ) : null}
             </div>
@@ -163,20 +144,7 @@ function Syllabuses() {
                   content="This structure is automatically generated and can't be edited. It must always be last."
                   side="right"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="absolute left-full top-[7px] ml-2 size-6 text-neutral-500"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                    />
-                  </svg>
+                  <InformationCircleIcon className="absolute left-full top-[7px] ml-2 size-6 text-neutral-500" />
                 </Tooltip>
               </div>
             ) : null}
@@ -195,14 +163,7 @@ function Syllabuses() {
                   resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: 'all' });
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
-                  <path
-                    fillRule="evenodd"
-                    d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-
+                <TrashIcon className="size-4" />
                 <span>Reset</span>
               </Button>
             ) : null}
@@ -261,14 +222,7 @@ function Syllabuses() {
                         asChild
                       >
                         <button onClick={() => saveSyllabusModalRef.current?.onOpen(structure, parent, null)}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="size-5"
-                          >
-                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                          </svg>
+                          <PlusIcon className="size-5" />
                           <span>Add {structure.title}</span>
                         </button>
                       </Tree.Item>
@@ -282,9 +236,7 @@ function Syllabuses() {
                   className="pl-2.5 text-sm"
                   onClick={() => saveSyllabusModalRef.current?.onOpen(prevStructures.get(null), null, null)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                  </svg>
+                  <PlusIcon className="size-5" />
                   <span>Add {prevStructures.get(null).title}</span>
                 </Button>
               </div>
