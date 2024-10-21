@@ -64,7 +64,10 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
         ) : null
       }
       isOpen={!!data}
-      onClose={() => setData(null)}
+      onClose={() => {
+        setData(null);
+        reset();
+      }}
     >
       <form
         className="mt-4"

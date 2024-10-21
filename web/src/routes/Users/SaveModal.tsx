@@ -47,7 +47,14 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
   }, [fetcher.data]);
 
   return (
-    <Modal title={`${data?.user ? 'Edit' : 'Add'} User`} isOpen={!!data} onClose={() => setData(null)}>
+    <Modal
+      title={`${data?.user ? 'Edit' : 'Add'} User`}
+      isOpen={!!data}
+      onClose={() => {
+        setData(null);
+        reset();
+      }}
+    >
       <form
         className="mt-4"
         onSubmit={handleSubmit((values) => {

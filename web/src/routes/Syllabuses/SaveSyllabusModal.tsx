@@ -65,7 +65,10 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
         ) : null
       }
       isOpen={!!data}
-      onClose={() => setData(null)}
+      onClose={() => {
+        setData(null);
+        reset();
+      }}
     >
       <form
         className="mt-4"
