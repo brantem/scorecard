@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/jmoiron/sqlx"
@@ -21,7 +22,7 @@ func New() *sqlx.DB {
 		sqldblogger.WithQueryerLevel(sqldblogger.LevelDebug),
 		sqldblogger.WithExecerLevel(sqldblogger.LevelDebug),
 	}
-	_db := sqldblogger.OpenDriver(os.Getenv("DB_DSN"), &sqlite3.SQLiteDriver{}, zerologadapter.New(logger), opts...)
+	_db := sqldblogger.OpenDriver(fmt.Sprintf("%s?_foreign_keys=on", os.Getenv("DB_DSN")), &sqlite3.SQLiteDriver{}, zerologadapter.New(logger), opts...)
 	db := sqlx.NewDb(_db, "sqlite3")
 	return db
 }
