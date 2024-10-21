@@ -247,6 +247,14 @@ func (h *Handler) copySyllabusesIntoStructures(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
+	_, err = tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE`)
+	if err != nil {
+		tx.Rollback()
+		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
 	tx.Commit()
 
 	result.Success = true
@@ -304,24 +312,38 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
+	tx := h.db.MustBeginTx(c.Context(), nil)
+
 	structureID := c.Params("structureId")
 	if structureID == "all" {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM scorecard_structures`)
+		_, err := tx.ExecContext(c.Context(), `DELETE FROM scorecard_structures`)
 		if err != nil {
+			tx.Rollback()
 			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 		result.Success = true
 	} else if v, err := strconv.Atoi(structureID); err == nil {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM scorecard_structures WHERE id = ?`, v)
+		_, err := tx.ExecContext(c.Context(), `DELETE FROM scorecard_structures WHERE id = ?`, v)
 		if err != nil {
+			tx.Rollback()
 			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 		result.Success = true
 	}
+
+	_, err := tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE`)
+	if err != nil {
+		tx.Rollback()
+		log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	tx.Commit()
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }

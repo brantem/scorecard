@@ -57,6 +57,8 @@ func (h *Handler) saveScore(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
+	userID, _ := c.ParamsInt("userId")
+
 	var body struct {
 		Score float64 `json:"score"`
 	}
@@ -66,17 +68,30 @@ func (h *Handler) saveScore(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	_, err := h.db.ExecContext(c.UserContext(), `
+	tx := h.db.MustBeginTx(c.Context(), nil)
+
+	_, err := tx.ExecContext(c.UserContext(), `
 		INSERT INTO user_scores (user_id, syllabus_id, score)
 		VALUES (?, ?, ?)
 		ON CONFLICT (user_id, syllabus_id)
 		DO UPDATE SET score = EXCLUDED.score
-	`, c.Params("userId"), c.Params("syllabusId"), body.Score)
+	`, userID, c.Params("syllabusId"), body.Score)
 	if err != nil {
+		tx.Rollback()
 		log.Error().Err(err).Msg("score.saveScore")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
+
+	_, err = tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE WHERE user_id = ?`, userID)
+	if err != nil {
+		tx.Rollback()
+		log.Error().Err(err).Msg("score.saveScore")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	tx.Commit()
 
 	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
