@@ -94,7 +94,7 @@ export default function SyllabusList({ parentId, onCompleted }: SyllabusListProp
                 className="m-1.5 bg-neutral-100 px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-900 hover:text-white"
                 onClick={() => {
                   fetcher.submit(
-                    { type: 'SAVE', parentId, syllabusId: syllabus.id },
+                    { type: 'COPY', _syllabusId: syllabus.id, parentId },
                     { method: 'PUT', encType: 'application/json' },
                   );
                 }}

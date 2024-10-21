@@ -91,54 +91,106 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (h *Handler) generateScorecardStructures(c *fiber.Ctx) error {
+func (h *Handler) copySyllabusesIntoStructures(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`
 		Error   any  `json:"error"`
 	}
 
-	rows, err := h.db.QueryContext(c.Context(), `SELECT id, parent_id FROM syllabuses`)
+	var body struct {
+		ParentID *int `json:"parentId"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	targetID, _ := c.ParamsInt("syllabusId")
+
+	syllabuses := make(map[int]*int)
+	var syllabusIds []int
+	if targetID == 0 {
+		rows, err := h.db.QueryContext(c.Context(), `SELECT id, parent_id FROM syllabuses`)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var syllabusID int
+			var parentID *int
+			if err := rows.Scan(&syllabusID, &parentID); err != nil {
+				log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+				result.Error = constant.RespInternalServerError
+				return c.Status(fiber.StatusInternalServerError).JSON(result)
+			}
+			syllabuses[syllabusID] = parentID
+			syllabusIds = append(syllabusIds, syllabusID)
+		}
+	} else {
+		rows, err := h.db.QueryContext(c.Context(), `
+			WITH RECURSIVE t AS (
+			  SELECT *
+			  FROM syllabuses
+			  WHERE id = ?
+			  UNION ALL
+			  SELECT s.*
+			  FROM syllabuses s
+			  INNER JOIN t ON s.parent_id = t.id
+			)
+			SELECT id, parent_id FROM t
+		`, targetID)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var syllabusID int
+			var parentID *int
+			if err := rows.Scan(&syllabusID, &parentID); err != nil {
+				log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+				result.Error = constant.RespInternalServerError
+				return c.Status(fiber.StatusInternalServerError).JSON(result)
+			}
+			syllabuses[syllabusID] = parentID
+			syllabusIds = append(syllabusIds, syllabusID)
+		}
+	}
+
+	if len(syllabuses) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(result)
+	}
+
+	query, args, err := sqlx.In(`SELECT title, id FROM syllabuses WHERE id IN (?)`, syllabusIds)
 	if err != nil {
-		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
+		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	tx := h.db.MustBeginTx(c.Context(), nil)
+
+	rows, err := tx.QueryContext(c.Context(), fmt.Sprintf(`INSERT INTO structures (title, syllabus_id) %s RETURNING id, syllabus_id`, query), args...)
+	if err != nil {
+		tx.Rollback()
+		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 	defer rows.Close()
 
-	syllabuses := make(map[int]*int)
-	for rows.Next() {
-		var syllabusID int
-		var parentID *int
-		if err := rows.Scan(&syllabusID, &parentID); err != nil {
-			log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		syllabuses[syllabusID] = parentID
-	}
-
-	tx := h.db.MustBeginTx(c.Context(), nil)
-
-	rows2, err := tx.QueryContext(c.Context(), `
-		INSERT INTO structures (title, syllabus_id)
-		SELECT title, id
-		FROM syllabuses
-		RETURNING id, syllabus_id
-	`)
-	if err != nil {
-		tx.Rollback()
-		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
-		result.Error = constant.RespInternalServerError
-		return c.Status(fiber.StatusInternalServerError).JSON(result)
-	}
-	defer rows2.Close()
-
 	structures := make(map[int]int, len(syllabuses))
-	for rows2.Next() {
+	for rows.Next() {
 		var structureID, syllabusID int
-		if err := rows2.Scan(&structureID, &syllabusID); err != nil {
+		if err := rows.Scan(&structureID, &syllabusID); err != nil {
 			tx.Rollback()
-			log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
+			log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -147,8 +199,16 @@ func (h *Handler) generateScorecardStructures(c *fiber.Ctx) error {
 
 	values := make([]string, 0, len(structures))
 	for syllabusID, structureID := range structures {
-		if v := syllabuses[syllabusID]; v != nil {
-			values = append(values, fmt.Sprintf("(%d, %d)", structureID, structures[*v]))
+		var newID *int
+		if syllabusID == targetID {
+			newID = body.ParentID
+		} else if v := syllabuses[syllabusID]; v != nil {
+			_newID := structures[*v]
+			newID = &_newID
+		}
+
+		if newID != nil {
+			values = append(values, fmt.Sprintf("(%d, %d)", structureID, *newID))
 		} else {
 			values = append(values, fmt.Sprintf("(%d, NULL)", structureID))
 		}
@@ -165,7 +225,7 @@ func (h *Handler) generateScorecardStructures(c *fiber.Ctx) error {
 	`, strings.Join(values, ", ")))
 	if err != nil {
 		tx.Rollback()
-		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
+		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -183,9 +243,8 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 	}
 
 	var body struct {
-		ParentID   *int    `json:"parentId"`
-		Title      *string `json:"title"`
-		SyllabusID *int    `json:"syllabusId"`
+		ParentID *int   `json:"parentId"`
+		Title    string `json:"title"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
@@ -195,35 +254,12 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 
 	structureID := c.Params("structureID")
 
-	if body.Title == nil && body.SyllabusID == nil {
-		result.Error = fiber.Map{
-			"title":      "REQUIRED",
-			"syllabusId": "REQUIRED",
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(result)
-	}
-
 	if structureID != "" {
-		if body.Title == nil {
-			result.Error = fiber.Map{"title": "REQUIRED"}
-			return c.Status(fiber.StatusBadRequest).JSON(result)
-		}
-
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE structures
 			SET parent_id = ?, title = ?
 			WHERE id = ?
 		`, body.ParentID, body.Title, structureID)
-		if err != nil {
-			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-	} else if body.SyllabusID != nil {
-		_, err := h.db.ExecContext(c.Context(), `
-			INSERT INTO structures (parent_id, title, syllabus_id)
-			VALUES (?, (SELECT title from syllabuses WHERE id = ?), ?)
-		`, body.ParentID, body.SyllabusID, body.SyllabusID)
 		if err != nil {
 			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
 			result.Error = constant.RespInternalServerError

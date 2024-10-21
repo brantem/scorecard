@@ -124,7 +124,9 @@ function Scorecards() {
                 <span>Or</span>
                 <Button
                   className="text-sm"
-                  onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+                  onClick={() => {
+                    fetcher.submit({ type: 'COPY', _syllabusId: 0 }, { method: 'POST', encType: 'application/json' });
+                  }}
                 >
                   Generate from Syllabuses
                 </Button>
@@ -179,12 +181,16 @@ Scorecards.loader = async () => {
 
 Scorecards.action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const { type, _structureId, ...body } = await request.json();
+    const { type, _syllabusId, _structureId, ...body } = await request.json();
 
     let res;
     switch (type) {
-      case 'GENERATE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/generate`, { method: 'POST' });
+      case 'COPY':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/copy/${_syllabusId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       case 'SAVE':
         res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/${_structureId || ''}`, {

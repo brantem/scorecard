@@ -42,7 +42,7 @@ func (h *Handler) Register(r *fiber.App) {
 	{
 		structures := scorecards.Group("/structures")
 		structures.Get("/", h.scorecardStructures)
-		structures.Post("/generate", h.generateScorecardStructures)
+		structures.Post("/copy/:syllabusId<int>", h.copySyllabusesIntoStructures)
 		structures.Put("/:structureId<int>?", h.saveScorecardStructure)
 		structures.Delete("/:structureId", h.deleteScorecardStructure)
 	}

@@ -44,9 +44,22 @@ export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
     >
       {typeof isManual === 'boolean' ? (
         isManual ? (
-          <SaveForm parentId={data?.parent?.id || null} structure={null} onCompleted={() => setData(null)} />
+          <SaveForm
+            parentId={data?.parent?.id || null}
+            structure={null}
+            onCompleted={() => {
+              setIsManual(null);
+              setData(null);
+            }}
+          />
         ) : (
-          <SyllabusList parentId={data?.parent?.id || null} onCompleted={() => setData(null)} />
+          <SyllabusList
+            parentId={data?.parent?.id || null}
+            onCompleted={() => {
+              setIsManual(null);
+              setData(null);
+            }}
+          />
         )
       ) : (
         <div className="mt-4 flex w-full items-center gap-4">
