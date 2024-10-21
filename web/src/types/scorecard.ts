@@ -10,3 +10,21 @@ export type Structure = {
   title: string;
   syllabus: Syllabus | null;
 };
+
+export type Scorecard = {
+  id: number;
+  user: {
+    id: number;
+    name: string;
+  };
+  score: number;
+  items: ScorecardItem[];
+  isOutdated: boolean;
+  generatedAt: string;
+};
+
+export type ScorecardItem = {
+  id: number;
+  structureId: number;
+  score: number;
+};

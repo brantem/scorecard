@@ -31,7 +31,7 @@ function Users() {
 
   return (
     <>
-      <div className="mx-4 mt-4 flex items-start justify-between">
+      <div className="flex items-start justify-between p-4 pb-0">
         <h1 className="font-semibold">Users</h1>
         <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen(null)}>
           <PlusIcon className="size-5" />

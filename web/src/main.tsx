@@ -3,6 +3,8 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import Root from 'routes/Root';
 import Users from 'routes/Users';
+import Scorecards from 'routes/Scorecards';
+import Scorecard from 'routes/Scorecard';
 import Syllabuses from 'routes/Syllabuses';
 import Scores from 'routes/Scores';
 import Structures from 'routes/Structures';
@@ -16,7 +18,13 @@ const router = createBrowserRouter([
     children: [
       {
         path: '',
-        element: <h1>Scorecards</h1>,
+        loader: Scorecards.loader,
+        element: <Scorecards />,
+      },
+      {
+        path: ':scorecardId',
+        loader: Scorecard.loader,
+        element: <Scorecard />,
       },
       {
         path: 'users',
