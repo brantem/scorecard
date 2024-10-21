@@ -258,7 +258,17 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 
 	structureID, _ := c.ParamsInt("structureId")
 
-	if structureID != 0 {
+	if structureID == 0 {
+		_, err := h.db.ExecContext(c.Context(), `
+		INSERT INTO scorecard_structures (parent_id, title)
+		VALUES (?, ?)
+	`, body.ParentID, body.Title)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+	} else if structureID > 0 {
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE scorecard_structures
 			SET parent_id = ?, title = ?
@@ -270,15 +280,7 @@ func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err := h.db.ExecContext(c.Context(), `
-			INSERT INTO scorecard_structures (parent_id, title)
-			VALUES (?, ?)
-		`, body.ParentID, body.Title)
-		if err != nil {
-			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
+		return c.Status(fiber.StatusBadRequest).JSON(result)
 	}
 
 	result.Success = true
@@ -293,28 +295,19 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 
 	tx := h.db.MustBeginTx(c.Context(), nil)
 
-	structureID := c.Params("structureId")
-	if structureID == "all" {
-		_, err := tx.ExecContext(c.Context(), `DELETE FROM scorecard_structures`)
-		if err != nil {
-			tx.Rollback()
-			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
-	} else if v, err := strconv.Atoi(structureID); err == nil {
-		_, err := tx.ExecContext(c.Context(), `DELETE FROM scorecard_structures WHERE id = ?`, v)
-		if err != nil {
-			tx.Rollback()
-			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
+	structureID, _ := c.ParamsInt("structureId")
+	_, err := tx.ExecContext(c.Context(), `
+		DELETE FROM scorecard_structures
+		WHERE (? = 0 OR id = ?)
+	`, structureID, structureID)
+	if err != nil {
+		tx.Rollback()
+		log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	_, err := tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE`)
+	_, err = tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE`)
 	if err != nil {
 		tx.Rollback()
 		log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
@@ -324,6 +317,7 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 
 	tx.Commit()
 
+	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 

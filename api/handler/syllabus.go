@@ -130,40 +130,22 @@ func (h *Handler) deleteSyllabusStructure(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
-	structureID := c.Params("structureId")
-	if structureID == "all" {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM syllabus_structures`)
-		if err != nil {
-			log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
-	} else if v, err := strconv.Atoi(structureID); err == nil {
-		_, err := h.db.ExecContext(c.Context(), `
-			WITH t AS (
-			  SELECT id FROM syllabus_structures
-			)
-			DELETE FROM syllabus_structures
-			WHERE id IN (
-			  SELECT
-			    CASE WHEN (SELECT COUNT(*) FROM t) = 2
-			      THEN id
-			      ELSE ?
-			    END
-			  FROM t
-			  UNION ALL
-			  SELECT ? WHERE (SELECT COUNT(*) FROM t) != 2
-			)
-		`, v, v)
-		if err != nil {
-			log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
+	structureID, _ := c.ParamsInt("structureId", -1)
+	if structureID < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(result)
 	}
 
+	_, err := h.db.ExecContext(c.Context(), `
+		DELETE FROM syllabus_structures
+		WHERE (? = 0 OR id = ?)
+	`, structureID, structureID)
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
@@ -296,24 +278,21 @@ func (h *Handler) deleteSyllabus(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
-	syllabusID := c.Params("syllabusId")
-	if syllabusID == "all" {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM syllabuses`)
-		if err != nil {
-			log.Error().Err(err).Msg("syllabus.deleteSyllabus")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
-	} else if v, err := strconv.Atoi(syllabusID); err == nil {
-		_, err := h.db.ExecContext(c.Context(), `DELETE FROM syllabuses WHERE id = ?`, v)
-		if err != nil {
-			log.Error().Err(err).Msg("syllabus.deleteSyllabus")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
-		}
-		result.Success = true
+	syllabusID, _ := c.ParamsInt("syllabusId", -1)
+	if syllabusID < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(result)
 	}
 
+	_, err := h.db.ExecContext(c.Context(), `
+		DELETE FROM syllabuses
+		WHERE (? = 0 OR id = ?)
+	`, syllabusID, syllabusID)
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.deleteSyllabus")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
 }

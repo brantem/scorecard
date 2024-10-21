@@ -71,7 +71,7 @@ function Syllabuses() {
               <Button
                 className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
-                  resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: 'all' });
+                  resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: '0' });
                 }}
               >
                 <TrashIcon className="size-4" />
@@ -107,7 +107,7 @@ function Syllabuses() {
                         onClick={() => {
                           deleteModalRef.current?.onOpen('Structure', {
                             type: 'DELETE_STRUCTURE',
-                            _structureId: structure.id,
+                            _structureId: data.structures.length === 2 ? '0' : structure.id, // Reset if there is only 2 structures
                           });
                         }}
                       >
@@ -160,7 +160,7 @@ function Syllabuses() {
               <Button
                 className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
-                  resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: 'all' });
+                  resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: '0' });
                 }}
               >
                 <TrashIcon className="size-4" />

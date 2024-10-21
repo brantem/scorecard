@@ -52,7 +52,7 @@ function Structures() {
           {data.structures.length ? (
             <Button
               className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
-              onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: 'all' })}
+              onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: '0' })}
             >
               <TrashIcon className="size-4" />
               <span>Reset</span>
