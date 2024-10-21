@@ -17,9 +17,9 @@ func (h *Handler) scores(c *fiber.Ctx) error {
 	result.Nodes = []*model.Score{}
 
 	rows, err := h.db.QueryxContext(c.Context(), `
-		SELECT user_id, score
-		FROM user_scores
-		WHERE syllabus_id = ?
+		SELECT u.id AS user_id, us.score
+		FROM users u
+		LEFT JOIN user_scores us ON us.user_id = u.id AND us.syllabus_id = ?
 	`, c.Params("syllabusId"))
 	if err != nil {
 		log.Error().Err(err).Msg("score.scores")

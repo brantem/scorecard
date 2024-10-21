@@ -9,11 +9,19 @@ export type SyllabusStructure = {
   title: string;
 };
 
-export type Syllabus = {
+export type BaseSyllabus = {
   id: number;
-  parentId: number | null;
-  structureId: number;
   title: string;
+};
+
+export type Syllabus = BaseSyllabus & {
+  parentId: number | null;
+  structureId?: number;
+};
+
+export type Score = {
+  user: User;
+  score: number | null;
 };
 
 export type Structure = {

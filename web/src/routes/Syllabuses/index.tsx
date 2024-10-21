@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import { useLoaderData, useFetcher, type ActionFunctionArgs, Link } from 'react-router-dom';
 
 import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
@@ -215,6 +215,15 @@ function Syllabuses() {
                   items={syllabuses}
                   renderOptions={(syllabus) => (
                     <>
+                      {syllabus.structureId === assignmentStructure.id && (
+                        <Link
+                          to={`/syllabuses/${syllabus.id}/scores`}
+                          className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                        >
+                          Score
+                        </Link>
+                      )}
+
                       <button
                         className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
                         onClick={() => {

@@ -5,8 +5,8 @@ function Table({ children }: { children: React.ReactNode }) {
     <table
       className={cn(
         'w-full table-auto',
-        '[&_tr:has(th)]:bg-mono-50 [&_tr:has(th)]:text-left [&_tr:has(th)]:text-neutral-900',
-        '[&_tr:not(:has(th))]:border-mono-200 [&_tr:not(:has(th))]:border-t [&_tr:not(:has(th))]:text-neutral-700',
+        '[&_tr:has(th)]:bg-neutral-50 [&_tr:has(th)]:text-left [&_tr:has(th)]:text-neutral-900',
+        '[&_tr:not(:has(th))]:border-t [&_tr:not(:has(th))]:border-neutral-200 [&_tr:not(:has(th))]:text-neutral-700',
       )}
     >
       {children}
@@ -35,7 +35,7 @@ type TdProps = {
 
 function Td({ className, children }: TdProps) {
   return (
-    <td className={cn('text-mono-700 h-12 whitespace-nowrap py-0', className)}>
+    <td className={cn('h-12 whitespace-nowrap py-0 text-neutral-700', className)}>
       <div className="flex h-full items-center px-3">{children}</div>
     </td>
   );

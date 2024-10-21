@@ -229,6 +229,56 @@ func (h *Handler) syllabuses(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
+func (h *Handler) syllabus(c *fiber.Ctx) error {
+	type Syllabus struct {
+		model.BaseSyllabus
+		Parents []*model.BaseSyllabus `json:"parents"`
+	}
+
+	var result struct {
+		Syllabus *Syllabus `json:"syllabus"`
+		Error    any       `json:"error"`
+	}
+
+	syllabusID, _ := c.ParamsInt("syllabusId")
+
+	rows, err := h.db.QueryxContext(c.Context(), `
+		WITH RECURSIVE t AS (
+		  SELECT *
+		  FROM syllabuses
+		  WHERE id = ?
+		  UNION ALL
+		  SELECT s.*
+		  FROM syllabuses s
+		  INNER JOIN t ON s.id = t.parent_id
+		)
+		SELECT id, title FROM t
+	`, syllabusID)
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.syllabus")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var node model.BaseSyllabus
+		if err := rows.StructScan(&node); err != nil {
+			log.Error().Err(err).Msg("syllabus.syllabus")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+
+		if node.ID == syllabusID {
+			result.Syllabus = &Syllabus{node, nil}
+		} else {
+			result.Syllabus.Parents = append(result.Syllabus.Parents, &node)
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
 func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`

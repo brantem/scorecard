@@ -20,7 +20,7 @@ function Root() {
               to={route.to}
               className={cn(
                 'inline-block w-full rounded-full px-3 py-1',
-                location.pathname === route.to ? 'bg-neutral-900 text-white' : 'hover:bg-neutral-200',
+                location.pathname.includes(route.to) ? 'bg-neutral-900 text-white' : 'hover:bg-neutral-200',
               )}
             >
               {route.text}

@@ -4,6 +4,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import Root from 'routes/Root';
 import Users from 'routes/Users';
 import Syllabuses from 'routes/Syllabuses';
+import Scores from 'routes/Scores';
 import Structures from 'routes/Structures';
 
 import './index.css';
@@ -24,6 +25,12 @@ const router = createBrowserRouter([
         loader: Syllabuses.loader,
         action: Syllabuses.action,
         element: <Syllabuses />,
+      },
+      {
+        path: 'syllabuses/:syllabusId/scores',
+        loader: Scores.loader,
+        action: Scores.action,
+        element: <Scores />,
       },
       {
         path: 'structures',

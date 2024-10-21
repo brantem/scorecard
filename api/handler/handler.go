@@ -29,6 +29,7 @@ func (h *Handler) Register(r *fiber.App) {
 		structures.Delete("/:structureId", h.deleteSyllabusStructure)
 
 		syllabuses.Get("/", h.syllabuses)
+		syllabuses.Get("/:syllabusId<int>", h.syllabus)
 		syllabuses.Put("/:syllabusId<int>?", h.saveSyllabus)
 		syllabuses.Delete("/:syllabusId", h.deleteSyllabus)
 	}

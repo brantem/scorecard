@@ -46,7 +46,7 @@ function Users() {
             <tr>
               <Table.Th>Name</Table.Th>
 
-              <Table.Th className="w-32">Actions</Table.Th>
+              <Table.Th className="w-32 [&>div]:justify-end">Actions</Table.Th>
             </tr>
           </thead>
 
@@ -55,7 +55,7 @@ function Users() {
               <tr key={user.id}>
                 <Table.Td>{user.name}</Table.Td>
 
-                <Table.Td className="[&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
                   <button
                     className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
                     onClick={() => saveModalRef.current?.onOpen(user)}
