@@ -1,24 +1,37 @@
-import { useRef } from 'react';
-import { ActionFunctionArgs, useLoaderData } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
+import { ActionFunctionArgs, useLoaderData, useFetcher } from 'react-router-dom';
 
 import Button from 'components/Button';
 import SaveModal, { type SaveModalHandle } from './SaveModal';
+import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
-type User = {
-  id: number;
-  name: string;
-};
+import type { User } from 'types';
 
 function Users() {
   const data = useLoaderData() as { users: User[] };
+  const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
   const saveModalRef = useRef<SaveModalHandle>(null);
+  const deleteModalRef = useRef<DeleteModalHandle>(null);
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if (fetcher.data.success) {
+      switch ((fetcher.json as { type?: string }).type) {
+        case 'DELETE':
+          deleteModalRef.current?.onClose();
+          break;
+      }
+    } else {
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
+    }
+  }, [fetcher.data]);
 
   return (
     <>
       <div className="mx-4 mt-4 flex items-start justify-between">
         <h1 className="font-semibold">Users</h1>
-        <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen()}>
+        <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen(null)}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
             <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
           </svg>
@@ -31,7 +44,11 @@ function Users() {
           <thead>
             <tr className="bg-neutral-50">
               <th className="h-12 whitespace-nowrap py-0 font-medium">
-                <div className="flex h-full w-full items-center justify-between px-3">Name</div>
+                <div className="flex h-full w-full items-center px-3">Name</div>
+              </th>
+
+              <th className="h-12 w-32 whitespace-nowrap py-0 font-medium">
+                <div className="flex h-full w-full items-center px-3">Actions</div>
               </th>
             </tr>
           </thead>
@@ -42,6 +59,24 @@ function Users() {
                 <td className="h-12 whitespace-nowrap py-0 text-neutral-700">
                   <div className="flex h-full items-center px-3">{user.name}</div>
                 </td>
+
+                <td className="h-12 whitespace-nowrap py-0">
+                  <div className="flex h-full items-center justify-end gap-2 pl-3 pr-1.5">
+                    <button
+                      className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                      onClick={() => saveModalRef.current?.onOpen(user)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                      onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -49,6 +84,10 @@ function Users() {
       </div>
 
       <SaveModal ref={saveModalRef} />
+      <DeleteModal
+        ref={deleteModalRef}
+        onAccept={(body) => fetcher.submit(body, { method: 'DELETE', encType: 'application/json' })}
+      />
     </>
   );
 }
@@ -64,12 +103,23 @@ Users.loader = async () => {
 
 Users.action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const { _userId, ...body } = await request.json();
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users/${_userId || ''}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const { type, _userId, ...body } = await request.json();
+
+    let res;
+    switch (type) {
+      case 'SAVE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users/${_userId || ''}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        break;
+      case 'DELETE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users/${_userId || ''}`, { method: 'DELETE' });
+        break;
+      default:
+        return { success: false, error: null };
+    }
     return await res.json();
   } catch {
     return { success: false, error: { code: 'INTERNAL_SERVER_ERROR' } };

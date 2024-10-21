@@ -14,7 +14,7 @@ export default function Tooltip({ children, isOpen, content, side = 'top', align
 
         <Portal>
           <Content
-            className="relative z-[1000] rounded-lg bg-neutral-900 px-3 py-2 text-sm font-normal text-white"
+            className="relative z-[1000] max-w-xs rounded-lg bg-neutral-900 px-3 py-2 text-sm font-normal text-white"
             side={side}
             align={align}
             sideOffset={2}

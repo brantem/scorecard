@@ -14,25 +14,32 @@ const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
 });
 
+type Data = {
+  structure: SyllabusStructure;
+  parent: Syllabus | null;
+  syllabus: Syllabus | null;
+};
+
 export type SaveSyllabusModalHandle = {
-  onOpen(structure: SyllabusStructure, parent: Syllabus | null): void;
+  onOpen(structure: SyllabusStructure, parent: Syllabus | null, syllabus: Syllabus | null): void;
 };
 
 export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [data, setData] = useState<{ structure: SyllabusStructure; parent: Syllabus | null } | null>(null);
+  const [data, setData] = useState<Data | null>(null);
 
-  useImperativeHandle(ref, () => ({
-    onOpen(structure, parent) {
-      setData({ structure, parent });
-    },
-  }));
-
-  const { register, handleSubmit, formState, setError, reset } = useForm({
+  const { register, handleSubmit, formState, setError, setValue, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { title: '' },
   });
+
+  useImperativeHandle(ref, () => ({
+    onOpen(structure, parent, syllabus) {
+      setData({ structure, parent, syllabus });
+      if (syllabus) setValue('title', syllabus.title);
+    },
+  }));
 
   useEffect(() => {
     if (!fetcher.data) return;
@@ -49,15 +56,14 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
 
   return (
     <Modal
-      title={`Add ${data?.structure.title}`}
+      title={`${data?.syllabus ? 'Edit' : 'Add'} ${data?.structure.title}`}
       description={
-        data?.parent ? (
+        data?.parent && !data.syllabus ? (
           <>
-            This will be added under <b>{data.parent.title}</b>
+            This will be added under <b>{data.parent.title}</b>.
           </>
         ) : null
       }
-      className="max-w-md"
       isOpen={!!data}
       onClose={() => setData(null)}
     >
@@ -68,8 +74,9 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
           fetcher.submit(
             {
               type: 'SAVE_SYLLABUS',
-              parentId: data.parent?.id || null,
-              structureId: data.structure.id || null,
+              _syllabusId: data.syllabus?.id || null,
+              parentId: data.syllabus ? data.syllabus.parentId : data.parent?.id || null,
+              structureId: data.syllabus ? null : data.structure.id,
               ...values,
             },
             { method: 'PUT', encType: 'application/json' },

@@ -8,34 +8,37 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
+import type { User } from 'types';
+
 const schema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Name is required.'), v.trim()),
 });
 
 export type SaveModalHandle = {
-  onOpen(): void;
+  onOpen(user: User | null): void;
 };
 
 export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [data, setData] = useState<{ user: User | null } | null>(null);
 
-  useImperativeHandle(ref, () => ({
-    onOpen() {
-      setIsOpen(true);
-    },
-  }));
-
-  const { register, handleSubmit, formState, setError, reset } = useForm({
+  const { register, handleSubmit, formState, setError, setValue, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { name: '' },
   });
 
+  useImperativeHandle(ref, () => ({
+    onOpen(user) {
+      setData({ user });
+      if (user) setValue('name', user.name);
+    },
+  }));
+
   useEffect(() => {
     if (!fetcher.data) return;
     if (fetcher.data.success) {
-      setIsOpen(false);
+      setData(null);
       reset();
     } else {
       if (fetcher.data.error?.code === 'NAME_SHOULD_BE_UNIQUE') setError('name', { message: 'Name should be unique.' });
@@ -44,10 +47,15 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
   }, [fetcher.data]);
 
   return (
-    <Modal title="Add User" className="max-w-md" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <Modal title={`${data?.user ? 'Edit' : 'Add'} User`} isOpen={!!data} onClose={() => setData(null)}>
       <form
         className="mt-4"
-        onSubmit={handleSubmit((values) => fetcher.submit(values, { method: 'PUT', encType: 'application/json' }))}
+        onSubmit={handleSubmit((values) => {
+          fetcher.submit(
+            { type: 'SAVE', _userId: data?.user?.id || null, ...values },
+            { method: 'PUT', encType: 'application/json' },
+          );
+        })}
       >
         <Input label="Name" {...register('name')} error={formState.errors.name?.message} required autoFocus />
 

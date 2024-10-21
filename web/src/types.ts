@@ -1,3 +1,8 @@
+export type User = {
+  id: number;
+  name: string;
+};
+
 export type SyllabusStructure = {
   id: number;
   prevId: number | null;

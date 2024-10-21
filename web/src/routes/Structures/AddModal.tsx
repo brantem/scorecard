@@ -1,17 +1,17 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 
 import Modal from 'components/Modal';
-import SaveStructureForm from './SaveStructureForm';
+import SaveForm from './SaveForm';
 import SyllabusList from './SyllabusList';
 import Button from 'components/Button';
 
 import type { Structure } from 'types';
 
-export type AddStructureModalHandle = {
+export type AddModalHandle = {
   onOpen(parent: Structure | null): void;
 };
 
-export default forwardRef<AddStructureModalHandle>(function AddStructureModal(_, ref) {
+export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
   const [isManual, setIsManual] = useState<boolean | null>(null);
   const [data, setData] = useState<{ parent: Structure | null } | null>(null);
 
@@ -28,11 +28,11 @@ export default forwardRef<AddStructureModalHandle>(function AddStructureModal(_,
         typeof isManual === 'boolean' ? (
           data?.parent ? (
             <>
-              The new structure will be added under <b>{data.parent.title}</b>
+              The new structure will be added under <b>{data.parent.title}</b>.
             </>
           ) : null
         ) : (
-          'You can create a structure manually or by copying data from a syllabus'
+          'You can create a structure manually or by copying data from a syllabus.'
         )
       }
       className={isManual === false ? 'max-w-4xl' : ''}
@@ -44,7 +44,7 @@ export default forwardRef<AddStructureModalHandle>(function AddStructureModal(_,
     >
       {typeof isManual === 'boolean' ? (
         isManual ? (
-          <SaveStructureForm parentId={data?.parent?.id || null} onCompleted={() => setData(null)} />
+          <SaveForm parentId={data?.parent?.id || null} structure={null} onCompleted={() => setData(null)} />
         ) : (
           <SyllabusList parentId={data?.parent?.id || null} onCompleted={() => setData(null)} />
         )

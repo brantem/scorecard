@@ -15,24 +15,30 @@ const schema = v.object({
 });
 
 export type SaveStructureModalHandle = {
-  onOpen(prev: SyllabusStructure | null): void;
+  onOpen(prev: SyllabusStructure | null, structure: SyllabusStructure | null): void;
+};
+
+type Data = {
+  prev: SyllabusStructure | null;
+  structure: SyllabusStructure | null;
 };
 
 export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [data, setData] = useState<{ prev: SyllabusStructure | null } | null>(null);
+  const [data, setData] = useState<Data | null>(null);
 
-  useImperativeHandle(ref, () => ({
-    onOpen(prev) {
-      setData({ prev });
-    },
-  }));
-
-  const { register, handleSubmit, formState, setError, reset } = useForm({
+  const { register, handleSubmit, formState, setError, setValue, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { title: '' },
   });
+
+  useImperativeHandle(ref, () => ({
+    onOpen(prev, structure) {
+      setData({ prev, structure });
+      if (structure) setValue('title', structure.title);
+    },
+  }));
 
   useEffect(() => {
     if (!fetcher.data) return;
@@ -49,15 +55,14 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
 
   return (
     <Modal
-      title="Add Structure"
+      title={`${data?.structure ? 'Edit' : 'Add'} Structure`}
       description={
-        data?.prev ? (
+        data?.prev && !data.structure ? (
           <>
-            The new structure will be added after <b>{data.prev.title}</b>
+            The new structure will be added after <b>{data.prev.title}</b>.
           </>
         ) : null
       }
-      className="max-w-md"
       isOpen={!!data}
       onClose={() => setData(null)}
     >
@@ -68,6 +73,7 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
           fetcher.submit(
             {
               type: 'SAVE_STRUCTURE',
+              _structureId: data.structure?.id || null,
               prevId: data.prev?.id || null,
               ...values,
             },

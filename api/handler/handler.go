@@ -19,6 +19,7 @@ func (h *Handler) Register(r *fiber.App) {
 	users := v1.Group("/users")
 	users.Get("/", h.users)
 	users.Put("/:userId<int>?", h.saveUser)
+	users.Delete("/:userId<int>", h.deleteUser)
 
 	syllabuses := v1.Group("/syllabuses")
 	{

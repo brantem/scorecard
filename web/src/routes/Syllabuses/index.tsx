@@ -1,11 +1,13 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 
 import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
 import Tree from 'components/Tree';
+import ResetModal, { type ResetModalHandle } from 'components/ResetModal';
 import SaveStructureModal, { type SaveStructureModalHandle } from './SaveStructureModal';
 import SaveSyllabusModal, { type SaveSyllabusModalHandle } from './SaveSyllabusModal';
+import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import { cn } from 'lib/helpers';
 import type { SyllabusStructure, Syllabus } from 'types';
@@ -14,20 +16,45 @@ function Syllabuses() {
   const data = useLoaderData() as { structures: SyllabusStructure[]; syllabuses: Syllabus[] };
   const fetcher = useFetcher();
 
+  const resetModalRef = useRef<ResetModalHandle>(null);
   const saveStructureModalRef = useRef<SaveStructureModalHandle>(null);
   const saveSyllabusModalRef = useRef<SaveSyllabusModalHandle>(null);
+  const deleteModalRef = useRef<DeleteModalHandle>(null);
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if (fetcher.data.success) {
+      switch ((fetcher.json as { type?: string }).type) {
+        case 'RESET_STRUCTURE':
+        case 'RESET_SYLLABUS':
+          resetModalRef.current?.onClose();
+          break;
+        case 'DELETE_STRUCTURE':
+        case 'DELETE_SYLLABUS':
+          deleteModalRef.current?.onClose();
+          break;
+      }
+    } else {
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
+    }
+  }, [fetcher.data]);
 
   const structures = new Map();
-  data.structures.forEach((structure) => structures.set(structure.prevId, structure));
+  data.structures.forEach((structure) => {
+    if (!structures.has(structure.id)) structures.set(structure.id, structure);
+    if (!structures.has(structure.prevId)) structures.set(structure.prevId, structure);
+  });
   const lastStructure = data.structures[data.structures.length - 1];
-  structures.set(lastStructure.id, structures.get(-1));
+  if (lastStructure) structures.set(lastStructure.id, structures.get(-1));
 
-  const assignmentStructureId = structures.get(-1).id;
+  const assignmentStructure = structures.get(-1);
 
   const syllabuses = new Map<number | null, Syllabus[]>();
   data.syllabuses.forEach((structure) => {
     syllabuses.set(structure.parentId, [...(syllabuses.get(structure.parentId) || []), structure]);
   });
+
+  const isStructuresLocked = data.syllabuses.length > 0;
 
   return (
     <>
@@ -36,11 +63,11 @@ function Syllabuses() {
           <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
             <h2>Structures</h2>
 
-            {!data.syllabuses.length ? (
+            {data.structures.length && !isStructuresLocked ? (
               <Button
-                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
+                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
-                  fetcher.submit({ type: 'RESET_SYLLABUS' }, { method: 'DELETE', encType: 'application/json' });
+                  resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: 'all' });
                 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
@@ -57,9 +84,42 @@ function Syllabuses() {
           </div>
 
           <div className="relative flex flex-col items-center gap-6 font-medium">
-            {data.structures.map((structure) => {
+            {data.structures.map((structure, i) => {
               if (structure.prevId === -1) return;
-              return <Structure key={structure.id}>{structure.title}</Structure>;
+              return (
+                <div key={structure.id} className="group relative">
+                  {!isStructuresLocked && (
+                    <div className="absolute right-full top-0 flex h-[38px] items-center pr-2 opacity-0 group-hover:opacity-100">
+                      <button
+                        className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm hover:bg-neutral-100"
+                        onClick={() => {
+                          saveStructureModalRef.current?.onOpen(i > 0 ? data.structures[i - 1] : null, structure);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+
+                  <Structure>{structure.title}</Structure>
+
+                  {!isStructuresLocked && (
+                    <div className="absolute left-full top-0 flex h-[38px] items-center pl-2 opacity-0 group-hover:opacity-100">
+                      <button
+                        className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm text-red-500 hover:bg-red-100"
+                        onClick={() => {
+                          deleteModalRef.current?.onOpen('Structure', {
+                            type: 'DELETE_STRUCTURE',
+                            _structureId: structure.id,
+                          });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
             })}
             <div className="relative">
               <button
@@ -67,8 +127,8 @@ function Syllabuses() {
                   'relative z-10 flex items-center justify-center rounded-full bg-neutral-900 text-white hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-400',
                   data.structures.length ? 'size-10' : 'h-10 gap-2 px-3',
                 )}
-                onClick={() => saveStructureModalRef.current?.onOpen(lastStructure)}
-                disabled={!!data.syllabuses.length}
+                onClick={() => saveStructureModalRef.current?.onOpen(lastStructure, null)}
+                disabled={isStructuresLocked}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
                   <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
@@ -76,8 +136,8 @@ function Syllabuses() {
                 {!data.structures.length ? <span>Structure</span> : null}
               </button>
 
-              {data.syllabuses.length ? (
-                <Tooltip content="You need to reset the syllabuses before updating this structure." side="right">
+              {isStructuresLocked ? (
+                <Tooltip content="You need to reset the syllabuses before updating the structures." side="right">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -95,7 +155,30 @@ function Syllabuses() {
                 </Tooltip>
               ) : null}
             </div>
-            {data.structures.length ? <Structure>Assignment</Structure> : null}
+            {data.structures.length ? (
+              <div className="relative">
+                <Structure>Assignment</Structure>
+                <Tooltip
+                  content="This structure is automatically generated and can't be edited. It must always be last."
+                  side="right"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="absolute left-full top-[7px] ml-2 size-6 text-neutral-500"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
+                    />
+                  </svg>
+                </Tooltip>
+              </div>
+            ) : null}
             <div className="absolute bottom-0 left-1/2 top-0 h-full w-px -translate-x-1/2 bg-neutral-300" />
           </div>
         </div>
@@ -104,76 +187,116 @@ function Syllabuses() {
           <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
             <h2>Syllabuses</h2>
 
-            <Button
-              className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-400 hover:bg-red-100 hover:text-red-500"
-              onClick={() => {
-                fetcher.submit({ type: 'RESET_SYLLABUS' }, { method: 'DELETE', encType: 'application/json' });
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
-                <path
-                  fillRule="evenodd"
-                  d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
-                  clipRule="evenodd"
-                />
-              </svg>
+            {data.syllabuses.length ? (
+              <Button
+                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
+                onClick={() => {
+                  resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: 'all' });
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
+                  <path
+                    fillRule="evenodd"
+                    d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
 
-              <span>Reset</span>
-            </Button>
+                <span>Reset</span>
+              </Button>
+            ) : null}
           </div>
 
-          {data.syllabuses.length ? (
-            <div className="flex h-full w-full flex-col items-center overflow-y-auto p-4 pt-16">
-              <Tree
-                items={syllabuses}
-                renderAdd={(parent) => {
-                  const structureId = parent?.structureId;
-                  if (structureId === assignmentStructureId) return null;
-
-                  const structure = parent ? structures.get(structureId) : structures.get(null);
-
-                  return (
-                    <Tree.Item
-                      className={cn(
-                        'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
-                        parent && 'ml-[calc(theme(spacing.8)+2px)]',
-                      )}
-                      asChild
-                    >
-                      <button onClick={() => saveSyllabusModalRef.current?.onOpen(structure, parent)}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          className="size-5"
-                        >
-                          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                        </svg>
-                        <span>Add {structure.title}</span>
+          {data.structures.length ? (
+            data.syllabuses.length ? (
+              <div className="flex h-full w-full flex-col items-center overflow-y-auto p-4 pt-16">
+                <Tree
+                  items={syllabuses}
+                  renderOptions={(syllabus) => (
+                    <>
+                      <button
+                        className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                        onClick={() => {
+                          saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId), null, syllabus);
+                        }}
+                      >
+                        Edit
                       </button>
-                    </Tree.Item>
-                  );
-                }}
-              />
-            </div>
+
+                      <button
+                        className="flex h-[34px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                        onClick={() => {
+                          deleteModalRef.current?.onOpen('Syllabus', {
+                            type: 'DELETE_SYLLABUS',
+                            _syllabusId: syllabus.id,
+                          });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                  renderAdd={(parent) => {
+                    const structureId = parent?.structureId;
+                    if (assignmentStructure && structureId === assignmentStructure.id) return null;
+
+                    const structure = parent ? structures.get(structureId) : structures.get(null);
+
+                    return (
+                      <Tree.Item
+                        className={cn(
+                          'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
+                          parent && 'ml-[calc(theme(spacing.8)+2px)]',
+                        )}
+                        asChild
+                      >
+                        <button onClick={() => saveSyllabusModalRef.current?.onOpen(structure, parent, null)}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className="size-5"
+                          >
+                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                          </svg>
+                          <span>Add {structure.title}</span>
+                        </button>
+                      </Tree.Item>
+                    );
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-2">
+                <Button
+                  className="pl-2.5 text-sm"
+                  onClick={() => saveSyllabusModalRef.current?.onOpen(structures.get(null), null, null)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                  </svg>
+                  <span>Add {structures.get(null).title}</span>
+                </Button>
+              </div>
+            )
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              <Button
-                className="pl-2.5 text-sm"
-                onClick={() => saveSyllabusModalRef.current?.onOpen(structures.get(null), null)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                </svg>
-                <span>Add {structures.get(null).title}</span>
-              </Button>
+            <div className="flex h-full items-center justify-center text-neutral-500">
+              You need to create the structures before adding any syllabuses
             </div>
           )}
         </div>
       </div>
 
+      <ResetModal
+        ref={resetModalRef}
+        onAccept={(body) => fetcher.submit(body, { method: 'DELETE', encType: 'application/json' })}
+      />
       <SaveStructureModal ref={saveStructureModalRef} />
       <SaveSyllabusModal ref={saveSyllabusModalRef} />
+      <DeleteModal
+        ref={deleteModalRef}
+        onAccept={(body) => fetcher.submit(body, { method: 'DELETE', encType: 'application/json' })}
+      />
     </>
   );
 }
@@ -214,7 +337,10 @@ Syllabuses.action = async ({ request }: ActionFunctionArgs) => {
         });
         break;
       case 'RESET_STRUCTURE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/structures/all`, { method: 'DELETE' });
+      case 'DELETE_STRUCTURE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/structures/${_structureId || ''}`, {
+          method: 'DELETE',
+        });
         break;
       case 'SAVE_SYLLABUS':
         res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${_syllabusId || ''}`, {
@@ -224,8 +350,10 @@ Syllabuses.action = async ({ request }: ActionFunctionArgs) => {
         });
         break;
       case 'RESET_SYLLABUS':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/all`, { method: 'DELETE' });
+      case 'DELETE_SYLLABUS':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${_syllabusId || ''}`, { method: 'DELETE' });
         break;
+
       default:
         return { success: false, error: null };
     }

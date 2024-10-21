@@ -114,3 +114,20 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 	result.Success = true
 	return c.Status(fiber.StatusOK).JSON(result)
 }
+
+func (h *Handler) deleteUser(c *fiber.Ctx) error {
+	var result struct {
+		Success bool `json:"success"`
+		Error   any  `json:"error"`
+	}
+
+	_, err := h.db.ExecContext(c.Context(), `DELETE FROM users WHERE id = ?`, c.Params("userId"))
+	if err != nil {
+		log.Error().Err(err).Msg("user.deleteUser")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	result.Success = true
+	return c.Status(fiber.StatusOK).JSON(result)
+}
