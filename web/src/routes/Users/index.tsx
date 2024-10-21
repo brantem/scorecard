@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { ActionFunctionArgs, useLoaderData, useFetcher } from 'react-router-dom';
 
 import Button from 'components/Button';
+import Table from 'components/Table';
 import SaveModal, { type SaveModalHandle } from './SaveModal';
 import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
@@ -40,47 +41,39 @@ function Users() {
       </div>
 
       <div className="m-4 overflow-x-auto rounded-lg border border-neutral-200">
-        <table className="w-full">
+        <Table>
           <thead>
-            <tr className="bg-neutral-50">
-              <th className="h-12 whitespace-nowrap py-0 font-medium">
-                <div className="flex h-full w-full items-center px-3">Name</div>
-              </th>
+            <tr>
+              <Table.Th>Name</Table.Th>
 
-              <th className="h-12 w-32 whitespace-nowrap py-0 font-medium">
-                <div className="flex h-full w-full items-center px-3">Actions</div>
-              </th>
+              <Table.Th className="w-32">Actions</Table.Th>
             </tr>
           </thead>
 
           <tbody>
             {data.users.map((user) => (
-              <tr key={user.id} className="border-t border-neutral-200 text-neutral-700">
-                <td className="h-12 whitespace-nowrap py-0 text-neutral-700">
-                  <div className="flex h-full items-center px-3">{user.name}</div>
-                </td>
+              <tr key={user.id}>
+                <Table.Td>{user.name}</Table.Td>
 
-                <td className="h-12 whitespace-nowrap py-0">
-                  <div className="flex h-full items-center justify-end gap-2 pl-3 pr-1.5">
-                    <button
-                      className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                      onClick={() => saveModalRef.current?.onOpen(user)}
-                    >
-                      Edit
-                    </button>
+                <Table.Td className="[&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                  <button
+                    className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                    onClick={() => saveModalRef.current?.onOpen(user)}
+                  >
+                    Edit
+                  </button>
 
-                    <button
-                      className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                      onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                  <button
+                    className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                    onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
+                  >
+                    Delete
+                  </button>
+                </Table.Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       </div>
 
       <SaveModal ref={saveModalRef} />
