@@ -29,7 +29,7 @@ function Root() {
         ))}
       </ul>
 
-      <div className="mx-auto h-full w-full max-w-[1920px] overflow-hidden border-neutral-200 bg-white min-[1920px]:border-x">
+      <div className="mx-auto size-full max-w-[1920px] overflow-hidden border-neutral-200 bg-white min-[1920px]:border-x">
         <Outlet />
       </div>
     </>

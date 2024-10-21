@@ -45,13 +45,13 @@ function Scorecards() {
 
   return (
     <>
-      <div className="relative flex h-full flex-col items-center overflow-y-auto p-4 pt-16">
+      <div className="relative h-full">
         <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
           <h2>Structures</h2>
 
           {data.structures.length ? (
             <Button
-              className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
+              className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
               onClick={() => resetModalRef.current?.onOpen('Scorecards', { type: 'RESET', _structureId: 'all' })}
             >
               <TrashIcon className="size-4" />
@@ -62,45 +62,46 @@ function Scorecards() {
 
         {data.canCreate ? (
           data.structures.length ? (
-            <Tree
-              items={structures}
-              renderOptions={(structure) => (
-                <>
-                  <button
-                    className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                    onClick={() => editModalRef.current?.onOpen(structure)}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="flex h-[34px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                    onClick={() => {
-                      deleteModalRef.current?.onOpen('Structure', { type: 'DELETE', _structureId: structure.id });
-                    }}
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
-              renderAdd={(parent) => {
-                if (parent?.syllabus?.isAssignment) return null;
-                return (
-                  <Tree.Item
-                    className={cn(
-                      'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
-                      parent && 'ml-[calc(theme(spacing.8)+2px)]',
-                    )}
-                    asChild
-                  >
-                    <button onClick={() => addModalRef.current?.onOpen(parent)}>
-                      <PlusIcon className="size-5" />
-                      <span>Add Structure</span>
+            <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-12">
+              <Tree
+                items={structures}
+                renderOptions={(structure) => (
+                  <>
+                    <button
+                      className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                      onClick={() => editModalRef.current?.onOpen(structure)}
+                    >
+                      Edit
                     </button>
-                  </Tree.Item>
-                );
-              }}
-            />
+                    <button
+                      className="flex h-[34px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                      onClick={() => {
+                        deleteModalRef.current?.onOpen('Structure', { type: 'DELETE', _structureId: structure.id });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+                renderAdd={(parent) => {
+                  if (parent?.syllabus?.isAssignment) return null;
+                  return (
+                    <Tree.Item
+                      className={cn(
+                        'flex min-w-0 gap-2 border-neutral-800 bg-neutral-900 pl-2 text-white hover:bg-neutral-800',
+                        parent && 'ml-[calc(theme(spacing.8)+2px)]',
+                      )}
+                      asChild
+                    >
+                      <button onClick={() => addModalRef.current?.onOpen(parent)}>
+                        <PlusIcon className="size-5" />
+                        <span>Add Structure</span>
+                      </button>
+                    </Tree.Item>
+                  );
+                }}
+              />
+            </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2">
               <span>Start building the structures for the Scorecard</span>

@@ -22,7 +22,7 @@ type ThProps = {
 function Th({ className, children }: ThProps) {
   return (
     <th className={cn('h-12 whitespace-nowrap py-0 font-medium', className)}>
-      <div className="flex h-full w-full items-center px-3">{children}</div>
+      <div className="flex size-full items-center px-3">{children}</div>
     </th>
   );
 }

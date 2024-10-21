@@ -69,7 +69,7 @@ function Syllabuses() {
 
             {data.structures.length && !isStructuresLocked ? (
               <Button
-                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
+                className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
                   resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: 'all' });
                 }}
@@ -158,7 +158,7 @@ function Syllabuses() {
 
             {data.syllabuses.length ? (
               <Button
-                className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
+                className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
                   resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: 'all' });
                 }}
@@ -171,7 +171,7 @@ function Syllabuses() {
 
           {data.structures.length ? (
             data.syllabuses.length ? (
-              <div className="flex h-full w-full flex-col items-center overflow-y-auto p-4 pt-16">
+              <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-12">
                 <Tree
                   items={syllabuses}
                   renderOptions={(syllabus) => (
