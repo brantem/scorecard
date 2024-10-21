@@ -3,7 +3,7 @@ import { useFetcher } from 'react-router-dom';
 
 import Button from 'components/Button';
 
-import type { Syllabus } from 'types';
+import type { Syllabus } from 'types/syllabus';
 import { cn } from 'lib/helpers';
 
 type SyllabusListProps = {
@@ -17,6 +17,7 @@ export default function SyllabusList({ parentId, onCompleted }: SyllabusListProp
   const [syllabuses, setSyllabuses] = useState<Map<Syllabus['parentId'], Syllabus[]>>(new Map());
   const [parents, setParents] = useState<Syllabus[]>([]);
 
+  // not efficient
   useEffect(() => {
     (async () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses`);

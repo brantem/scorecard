@@ -3,7 +3,7 @@ import { forwardRef, useImperativeHandle, useState } from 'react';
 import Modal from 'components/Modal';
 import SaveForm from './SaveForm';
 
-import type { Structure } from 'types';
+import type { Structure } from 'types/scorecard';
 
 export type EditModalHandle = {
   onOpen(structure: Structure): void;

@@ -8,7 +8,7 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { User } from 'types';
+import type { User } from 'types/user';
 
 const schema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Name is required.'), v.trim()),

@@ -8,19 +8,19 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { SyllabusStructure } from 'types';
+import type { Structure } from 'types/syllabus';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
 });
 
 export type SaveStructureModalHandle = {
-  onOpen(prev: SyllabusStructure | null, structure: SyllabusStructure | null): void;
+  onOpen(prev: Structure | null, structure: Structure | null): void;
 };
 
 type Data = {
-  prev: SyllabusStructure | null;
-  structure: SyllabusStructure | null;
+  prev: Structure | null;
+  structure: Structure | null;
 };
 
 export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(_, ref) {

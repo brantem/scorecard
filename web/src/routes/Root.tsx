@@ -5,7 +5,7 @@ import { cn } from 'lib/helpers';
 const routes = [
   { to: '/users', text: 'Users' },
   { to: '/syllabuses', text: 'Syllabuses' },
-  { to: '/structures', text: 'Structures' },
+  { to: '/scorecards', text: 'Scorecards' },
 ];
 
 function Root() {

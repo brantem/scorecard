@@ -9,9 +9,9 @@ import EditModal, { type EditModalHandle } from './EditModal';
 import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import { cn } from 'lib/helpers';
-import type { Structure } from 'types';
+import type { Structure } from 'types/scorecard';
 
-function Structures() {
+function Scorecards() {
   const data = useLoaderData() as { canCreate: boolean; structures: Structure[] };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -50,7 +50,7 @@ function Structures() {
           {data.structures.length ? (
             <Button
               className="-mr-1.5 -mt-1.5 bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
-              onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: 'all' })}
+              onClick={() => resetModalRef.current?.onOpen('Scorecards', { type: 'RESET', _structureId: 'all' })}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4">
                 <path
@@ -147,7 +147,7 @@ function Structures() {
   );
 }
 
-Structures.loader = async () => {
+Scorecards.loader = async () => {
   const [canCreate, structures] = await Promise.all([
     (async () => {
       try {
@@ -159,7 +159,7 @@ Structures.loader = async () => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures`);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -169,17 +169,17 @@ Structures.loader = async () => {
   return { canCreate, structures };
 };
 
-Structures.action = async ({ request }: ActionFunctionArgs) => {
+Scorecards.action = async ({ request }: ActionFunctionArgs) => {
   try {
     const { type, _structureId, ...body } = await request.json();
 
     let res;
     switch (type) {
       case 'GENERATE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures/generate`, { method: 'POST' });
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/generate`, { method: 'POST' });
         break;
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures/${_structureId || ''}`, {
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/${_structureId || ''}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -187,7 +187,9 @@ Structures.action = async ({ request }: ActionFunctionArgs) => {
         break;
       case 'RESET':
       case 'DELETE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/structures/${_structureId || ''}`, { method: 'DELETE' });
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/${_structureId || ''}`, {
+          method: 'DELETE',
+        });
         break;
       default:
         return { success: false, error: null };
@@ -198,4 +200,4 @@ Structures.action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export default Structures;
+export default Scorecards;

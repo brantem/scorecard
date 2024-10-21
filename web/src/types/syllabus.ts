@@ -1,9 +1,6 @@
-export type User = {
-  id: number;
-  name: string;
-};
+import type { User } from './user';
 
-export type SyllabusStructure = {
+export type Structure = {
   id: number;
   prevId: number | null;
   title: string;
@@ -22,10 +19,4 @@ export type Syllabus = BaseSyllabus & {
 export type Score = {
   user: User;
   score: number | null;
-};
-
-export type Structure = {
-  id: number;
-  parentId: number | null;
-  title: string;
 };

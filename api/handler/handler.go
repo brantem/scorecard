@@ -38,9 +38,12 @@ func (h *Handler) Register(r *fiber.App) {
 	scores.Get("/", h.scores)
 	scores.Put("/:userId<int>", h.saveScore)
 
-	structures := v1.Group("/structures")
-	structures.Get("/", h.structures)
-	structures.Post("/generate", h.generateStructures)
-	structures.Put("/:structureId<int>?", h.saveStructure)
-	structures.Delete("/:structureId", h.deleteStructure)
+	scorecards := v1.Group("/scorecards")
+	{
+		structures := scorecards.Group("/structures")
+		structures.Get("/", h.scorecardStructures)
+		structures.Post("/generate", h.generateScorecardStructures)
+		structures.Put("/:structureId<int>?", h.saveScorecardStructure)
+		structures.Delete("/:structureId", h.deleteScorecardStructure)
+	}
 }

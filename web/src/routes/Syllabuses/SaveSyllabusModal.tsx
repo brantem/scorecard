@@ -8,20 +8,20 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { SyllabusStructure, Syllabus } from 'types';
+import type { Structure, Syllabus } from 'types/syllabus';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
 });
 
 type Data = {
-  structure: SyllabusStructure;
+  structure: Structure;
   parent: Syllabus | null;
   syllabus: Syllabus | null;
 };
 
 export type SaveSyllabusModalHandle = {
-  onOpen(structure: SyllabusStructure, parent: Syllabus | null, syllabus: Syllabus | null): void;
+  onOpen(structure: Structure, parent: Syllabus | null, syllabus: Syllabus | null): void;
 };
 
 export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_, ref) {

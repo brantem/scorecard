@@ -7,19 +7,19 @@ import { valibotResolver } from '@hookform/resolvers/valibot';
 import Input from 'components/Input';
 import Button from 'components/Button';
 
-import type { Structure } from 'types';
+import type { Structure } from 'types/scorecard';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
 });
 
-type SaveStructureFormProps = {
+type SaveFormProps = {
   parentId: number | null;
   structure: Structure | null;
   onCompleted(): void;
 };
 
-export default function SaveStructureForm({ parentId, structure, onCompleted }: SaveStructureFormProps) {
+export default function SaveForm({ parentId, structure, onCompleted }: SaveFormProps) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
   const { register, handleSubmit, formState } = useForm({

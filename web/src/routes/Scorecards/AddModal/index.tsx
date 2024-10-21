@@ -1,11 +1,11 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 
 import Modal from 'components/Modal';
-import SaveForm from './SaveForm';
+import SaveForm from '../SaveForm';
 import SyllabusList from './SyllabusList';
 import Button from 'components/Button';
 
-import type { Structure } from 'types';
+import type { Structure } from 'types/scorecard';
 
 export type AddModalHandle = {
   onOpen(parent: Structure | null): void;

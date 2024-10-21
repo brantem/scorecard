@@ -10,10 +10,10 @@ import SaveSyllabusModal, { type SaveSyllabusModalHandle } from './SaveSyllabusM
 import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import { cn } from 'lib/helpers';
-import type { SyllabusStructure, Syllabus } from 'types';
+import type { Structure, Syllabus } from 'types/syllabus';
 
 function Syllabuses() {
-  const data = useLoaderData() as { structures: SyllabusStructure[]; syllabuses: Syllabus[] };
+  const data = useLoaderData() as { structures: Structure[]; syllabuses: Syllabus[] };
   const fetcher = useFetcher();
 
   const resetModalRef = useRef<ResetModalHandle>(null);

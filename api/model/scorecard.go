@@ -1,6 +1,6 @@
 package model
 
-type Structure struct {
+type ScorecardStructure struct {
 	ID         int       `json:"id"`
 	ParentID   *int      `json:"parentId" db:"parent_id"`
 	Title      string    `json:"title"`

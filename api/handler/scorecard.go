@@ -11,16 +11,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h *Handler) structures(c *fiber.Ctx) error {
+func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	var result struct {
-		Nodes []*model.Structure `json:"nodes"`
-		Error any                `json:"error"`
+		Nodes []*model.ScorecardStructure `json:"nodes"`
+		Error any                         `json:"error"`
 	}
-	result.Nodes = []*model.Structure{}
+	result.Nodes = []*model.ScorecardStructure{}
 
 	rows, err := h.db.QueryxContext(c.Context(), `SELECT id, parent_id, title, syllabus_id FROM structures`)
 	if err != nil {
-		log.Error().Err(err).Msg("structure.structures")
+		log.Error().Err(err).Msg("scorecard.scorecardStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -28,9 +28,9 @@ func (h *Handler) structures(c *fiber.Ctx) error {
 
 	var syllabusIds []int
 	for rows.Next() {
-		var node model.Structure
+		var node model.ScorecardStructure
 		if err := rows.StructScan(&node); err != nil {
-			log.Error().Err(err).Msg("structure.structures")
+			log.Error().Err(err).Msg("scorecard.scorecardStructures")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -53,7 +53,7 @@ func (h *Handler) structures(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (h *Handler) generateStructures(c *fiber.Ctx) error {
+func (h *Handler) generateScorecardStructures(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`
 		Error   any  `json:"error"`
@@ -61,7 +61,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 
 	rows, err := h.db.QueryContext(c.Context(), `SELECT id, parent_id FROM syllabuses`)
 	if err != nil {
-		log.Error().Err(err).Msg("structure.generateStructures")
+		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -72,7 +72,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 		var syllabusID int
 		var parentID *int
 		if err := rows.Scan(&syllabusID, &parentID); err != nil {
-			log.Error().Err(err).Msg("structure.generateStructures")
+			log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -89,7 +89,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 	`)
 	if err != nil {
 		tx.Rollback()
-		log.Error().Err(err).Msg("structure.generateStructures")
+		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -100,7 +100,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 		var structureID, syllabusID int
 		if err := rows2.Scan(&structureID, &syllabusID); err != nil {
 			tx.Rollback()
-			log.Error().Err(err).Msg("structure.generateStructures")
+			log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -127,7 +127,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 	`, strings.Join(values, ", ")))
 	if err != nil {
 		tx.Rollback()
-		log.Error().Err(err).Msg("structure.generateStructures")
+		log.Error().Err(err).Msg("scorecard.generateScorecardStructures")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -138,7 +138,7 @@ func (h *Handler) generateStructures(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (h *Handler) saveStructure(c *fiber.Ctx) error {
+func (h *Handler) saveScorecardStructure(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`
 		Error   any  `json:"error"`
@@ -150,7 +150,7 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 		SyllabusID *int    `json:"syllabusId"`
 	}
 	if err := c.BodyParser(&body); err != nil {
-		log.Error().Err(err).Msg("structure.saveStructure")
+		log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
@@ -177,7 +177,7 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 			WHERE id = ?
 		`, body.ParentID, body.Title, structureID)
 		if err != nil {
-			log.Error().Err(err).Msg("structure.saveStructure")
+			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -187,7 +187,7 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 			VALUES (?, (SELECT title from syllabuses WHERE id = ?), ?)
 		`, body.ParentID, body.SyllabusID, body.SyllabusID)
 		if err != nil {
-			log.Error().Err(err).Msg("structure.saveStructure")
+			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -197,7 +197,7 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 			VALUES (?, ?)
 		`, body.ParentID, body.Title)
 		if err != nil {
-			log.Error().Err(err).Msg("structure.saveStructure")
+			log.Error().Err(err).Msg("scorecard.saveScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -207,7 +207,7 @@ func (h *Handler) saveStructure(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (h *Handler) deleteStructure(c *fiber.Ctx) error {
+func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`
 		Error   any  `json:"error"`
@@ -217,7 +217,7 @@ func (h *Handler) deleteStructure(c *fiber.Ctx) error {
 	if structureID == "all" {
 		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures`)
 		if err != nil {
-			log.Error().Err(err).Msg("structure.deleteStructure")
+			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
@@ -225,7 +225,7 @@ func (h *Handler) deleteStructure(c *fiber.Ctx) error {
 	} else if v, err := strconv.Atoi(structureID); err == nil {
 		_, err := h.db.ExecContext(c.Context(), `DELETE FROM structures WHERE id = ?`, v)
 		if err != nil {
-			log.Error().Err(err).Msg("structure.deleteStructure")
+			log.Error().Err(err).Msg("scorecard.deleteScorecardStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}

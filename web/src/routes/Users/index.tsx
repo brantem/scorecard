@@ -6,7 +6,7 @@ import Table from 'components/Table';
 import SaveModal, { type SaveModalHandle } from './SaveModal';
 import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
-import type { User } from 'types';
+import type { User } from 'types/user';
 
 function Users() {
   const data = useLoaderData() as { users: User[] };

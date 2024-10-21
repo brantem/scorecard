@@ -8,7 +8,7 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { Score } from 'types';
+import type { Score } from 'types/syllabus';
 
 const schema = v.object({
   score: v.pipe(v.number(), v.minValue(0, 'Score must be 0 or higher.'), v.maxValue(100, 'Score must not exceed 100')),

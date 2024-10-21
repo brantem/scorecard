@@ -4,7 +4,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs }
 import Table from 'components/Table';
 import SaveModal, { type SaveModalHandle } from './SaveModal';
 
-import type { BaseSyllabus, Score } from 'types';
+import type { BaseSyllabus, Score } from 'types/syllabus';
 
 type Syllabus = BaseSyllabus & {
   parents: BaseSyllabus[];
