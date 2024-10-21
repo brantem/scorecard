@@ -71,7 +71,7 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	if structureID := c.Params("structureId"); structureID != "" {
+	if structureID, _ := c.ParamsInt("structureId"); structureID != 0 {
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE syllabus_structures
 			SET prev_id = ?, title = ?
@@ -263,7 +263,7 @@ func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	if syllabusID := c.Params("syllabusID"); syllabusID != "" {
+	if syllabusID, _ := c.ParamsInt("syllabusID"); syllabusID != 0 {
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE syllabuses
 			SET parent_id = ?, title = ?

@@ -87,7 +87,7 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	if userID := c.Params("userId"); userID != "" {
+	if userID, _ := c.ParamsInt("userId"); userID != 0 {
 		_, err := h.db.ExecContext(c.UserContext(), `UPDATE users SET name = ? WHERE id = ?`, body.Name, userID)
 		if err != nil {
 			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
