@@ -67,20 +67,19 @@ function Scorecards() {
                 items={structures}
                 renderOptions={(structure) => (
                   <>
-                    <button
-                      className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                      onClick={() => editModalRef.current?.onOpen(structure)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="flex h-[34px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                      onClick={() => {
-                        deleteModalRef.current?.onOpen('Structure', { type: 'DELETE', _structureId: structure.id });
-                      }}
-                    >
-                      Delete
-                    </button>
+                    <Tree.Item className="min-w-0 hover:bg-neutral-100" asChild>
+                      <button onClick={() => editModalRef.current?.onOpen(structure)}>Edit</button>
+                    </Tree.Item>
+
+                    <Tree.Item className="min-w-0 border-red-200 bg-red-50 text-red-500 hover:bg-red-100" asChild>
+                      <button
+                        onClick={() => {
+                          deleteModalRef.current?.onOpen('Structure', { type: 'DELETE', _structureId: structure.id });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </Tree.Item>
                   </>
                 )}
                 renderAdd={(parent) => {

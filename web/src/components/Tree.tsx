@@ -40,7 +40,7 @@ function TreeItem<T extends TreeItem>({ item, renderOptions, renderAdd }: TreeIt
         <>
           <div className="group relative">
             <TreeInnerItem>{item.title}</TreeInnerItem>
-            <div className="absolute left-full top-0 flex h-full gap-2 pl-2 opacity-0 group-hover:opacity-100">
+            <div className="absolute left-full top-0 flex h-full gap-2 pl-2 opacity-10 group-hover:opacity-100">
               {renderOptions?.(item)}
             </div>
           </div>

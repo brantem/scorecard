@@ -176,35 +176,34 @@ function Syllabuses() {
                   items={syllabuses}
                   renderOptions={(syllabus) => (
                     <>
-                      {syllabus.structureId === assignmentStructure.id && (
-                        <Link
-                          to={`/syllabuses/${syllabus.id}/scores`}
-                          className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                      <Tree.Item className="min-w-0 hover:bg-neutral-100" asChild>
+                        <button
+                          onClick={() => {
+                            saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId), null, syllabus);
+                          }}
                         >
-                          Score
-                        </Link>
+                          Edit
+                        </button>
+                      </Tree.Item>
+
+                      <Tree.Item className="min-w-0 border-red-200 bg-red-50 text-red-500 hover:bg-red-100" asChild>
+                        <button
+                          onClick={() => {
+                            deleteModalRef.current?.onOpen('Syllabus', {
+                              type: 'DELETE_SYLLABUS',
+                              _syllabusId: syllabus.id,
+                            });
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </Tree.Item>
+
+                      {syllabus.structureId === assignmentStructure.id && (
+                        <Tree.Item className="ml-4 hover:bg-neutral-100" asChild>
+                          <Link to={`/syllabuses/${syllabus.id}/scores`}>Score</Link>
+                        </Tree.Item>
                       )}
-
-                      <button
-                        className="flex h-[34px] items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                        onClick={() => {
-                          saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId), null, syllabus);
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="flex h-[34px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                        onClick={() => {
-                          deleteModalRef.current?.onOpen('Syllabus', {
-                            type: 'DELETE_SYLLABUS',
-                            _syllabusId: syllabus.id,
-                          });
-                        }}
-                      >
-                        Delete
-                      </button>
                     </>
                   )}
                   renderAdd={(parent) => {
