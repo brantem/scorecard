@@ -5,7 +5,7 @@ import Root from 'routes/Root';
 import Users from 'routes/Users';
 import Syllabuses from 'routes/Syllabuses';
 import Scores from 'routes/Scores';
-import Scorecards from 'routes/Scorecards';
+import Structures from 'routes/Structures';
 
 import './index.css';
 
@@ -14,6 +14,10 @@ const router = createBrowserRouter([
     path: '/',
     element: <Root />,
     children: [
+      {
+        path: '',
+        element: <h1>Scorecards</h1>,
+      },
       {
         path: 'users',
         loader: Users.loader,
@@ -33,10 +37,10 @@ const router = createBrowserRouter([
         element: <Scores />,
       },
       {
-        path: 'scorecards',
-        loader: Scorecards.loader,
-        action: Scorecards.action,
-        element: <Scorecards />,
+        path: 'structures',
+        loader: Structures.loader,
+        action: Structures.action,
+        element: <Structures />,
       },
     ],
   },

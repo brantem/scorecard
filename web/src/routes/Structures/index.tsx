@@ -13,7 +13,7 @@ import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 import { cn } from 'lib/helpers';
 import type { Structure } from 'types/scorecard';
 
-function Scorecards() {
+function Structures() {
   const data = useLoaderData() as { canCreate: boolean; structures: Structure[] };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -52,7 +52,7 @@ function Scorecards() {
           {data.structures.length ? (
             <Button
               className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
-              onClick={() => resetModalRef.current?.onOpen('Scorecards', { type: 'RESET', _structureId: 'all' })}
+              onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: 'all' })}
             >
               <TrashIcon className="size-4" />
               <span>Reset</span>
@@ -145,7 +145,7 @@ function Scorecards() {
   );
 }
 
-Scorecards.loader = async () => {
+Structures.loader = async () => {
   const [canCreate, structures] = await Promise.all([
     (async () => {
       try {
@@ -167,7 +167,7 @@ Scorecards.loader = async () => {
   return { canCreate, structures };
 };
 
-Scorecards.action = async ({ request }: ActionFunctionArgs) => {
+Structures.action = async ({ request }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _structureId, ...body } = await request.json();
 
@@ -202,4 +202,4 @@ Scorecards.action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export default Scorecards;
+export default Structures;
