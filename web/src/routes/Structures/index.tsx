@@ -46,12 +46,12 @@ function Structures() {
   return (
     <>
       <div className="relative h-full">
-        <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-4 font-semibold">
+        <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0 font-semibold">
           <h2>Structures</h2>
 
           {data.structures.length ? (
             <Button
-              className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
+              className="bg-red-50 pl-2.5 text-sm text-red-500 hover:bg-red-100"
               onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: '0' })}
             >
               <TrashIcon className="size-4" />

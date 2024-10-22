@@ -18,7 +18,7 @@ function SyllabusScores() {
 
   return (
     <>
-      <div className="mx-4 mt-4 flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-4 pb-0">
         <h1 className="font-semibold">{data.syllabus.title}</h1>
         <div className="flex items-center gap-1 text-sm text-neutral-500">
           <Link to="/syllabuses" className="hover:underline">

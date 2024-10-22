@@ -20,7 +20,7 @@ function UserScores() {
 
   return (
     <>
-      <div className="mx-4 mt-4 flex flex-col gap-1">
+      <div className="flex min-h-[52px] items-start justify-between p-4 pb-0">
         <h1 className="font-semibold">{data.user.name}</h1>
       </div>
 
@@ -28,7 +28,7 @@ function UserScores() {
         {[...m.keys()].map((key, i) => {
           const parents = JSON.parse(key) as Score['syllabus']['parents'];
           return (
-            <div key={i} className="mt-1 overflow-x-auto rounded-lg border border-neutral-200">
+            <div key={i} className="overflow-x-auto rounded-lg border border-neutral-200">
               <div className="flex items-center gap-1 border-b bg-neutral-50 px-3 py-1.5 text-sm text-neutral-500">
                 {parents.map((parent, i) => (
                   <Fragment key={parent.id}>
