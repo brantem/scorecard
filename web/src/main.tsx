@@ -6,7 +6,7 @@ import Users from 'routes/Users';
 import Scorecards from 'routes/Scorecards';
 import Scorecard from 'routes/Scorecard';
 import Syllabuses from 'routes/Syllabuses';
-import Scores from 'routes/Scores';
+import SyllabusScores from 'routes/Syllabuses/Scores';
 import Structures from 'routes/Structures';
 
 import './index.css';
@@ -42,9 +42,9 @@ const router = createBrowserRouter([
       },
       {
         path: '/syllabuses/:syllabusId/scores',
-        loader: Scores.loader,
-        action: Scores.action,
-        element: <Scores />,
+        loader: SyllabusScores.loader,
+        action: SyllabusScores.action,
+        element: <SyllabusScores />,
       },
       {
         path: '/structures',

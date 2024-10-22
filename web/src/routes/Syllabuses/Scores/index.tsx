@@ -11,7 +11,7 @@ type Syllabus = BaseSyllabus & {
   parents: BaseSyllabus[];
 };
 
-function Scores() {
+function SyllabusScores() {
   const data = useLoaderData() as { syllabus: Syllabus; scores: Score[] };
 
   const saveModalRef = useRef<SaveModalHandle>(null);
@@ -70,7 +70,7 @@ function Scores() {
   );
 }
 
-Scores.loader = async ({ params }: LoaderFunctionArgs) => {
+SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
   const [syllabus, scores] = await Promise.all([
     (async () => {
       try {
@@ -93,7 +93,7 @@ Scores.loader = async ({ params }: LoaderFunctionArgs) => {
   return { syllabus, scores };
 };
 
-Scores.action = async ({ request }: ActionFunctionArgs) => {
+SyllabusScores.action = async ({ request }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _userId, ...body } = await request.json();
 
@@ -115,4 +115,4 @@ Scores.action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export default Scores;
+export default SyllabusScores;
