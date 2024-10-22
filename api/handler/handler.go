@@ -22,7 +22,11 @@ func (h *Handler) Register(r *fiber.App) {
 	users := v1.Group("/users")
 	users.Get("/", h.users)
 	users.Put("/:userId<int>?", h.saveUser)
-	users.Delete("/:userId<int>", h.deleteUser)
+
+	userID := users.Group("/:userId<int>")
+	userID.Get("/", h.user)
+	userID.Get("/scores", h.userScores)
+	userID.Delete("/", h.deleteUser)
 
 	syllabuses := v1.Group("/syllabuses")
 	{
@@ -32,14 +36,16 @@ func (h *Handler) Register(r *fiber.App) {
 		structures.Delete("/:structureId", h.deleteSyllabusStructure)
 
 		syllabuses.Get("/", h.syllabuses)
-		syllabuses.Get("/:syllabusId<int>", h.syllabus)
 		syllabuses.Put("/:syllabusId<int>?", h.saveSyllabus)
 		syllabuses.Delete("/:syllabusId", h.deleteSyllabus)
-	}
 
-	scores := syllabuses.Group("/:syllabusId<int>/scores")
-	scores.Get("/", h.scores)
-	scores.Put("/:userId<int>", h.saveScore)
+		syllabusID := syllabuses.Group("/:syllabusId<int>")
+		syllabusID.Get("/", h.syllabus)
+
+		scores := syllabusID.Group("/scores")
+		scores.Get("/", h.syllabusScores)
+		scores.Put("/:userId<int>", h.saveScore)
+	}
 
 	scorecards := v1.Group("/scorecards")
 	{

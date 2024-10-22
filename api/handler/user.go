@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"slices"
 	"strconv"
 
 	"github.com/brantem/scorecard/constant"
@@ -68,6 +69,99 @@ func (h *Handler) users(c *fiber.Ctx) error {
 		result.Nodes = append(result.Nodes, &node)
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) user(c *fiber.Ctx) error {
+	var result struct {
+		User  *model.User `json:"user"`
+		Error any         `json:"error"`
+	}
+
+	var user model.User
+	err := h.db.QueryRowxContext(c.UserContext(), `
+		SELECT id, name
+		FROM users
+		WHERE id = ?
+	`, c.Params("userId")).StructScan(&user)
+	if err != nil {
+		log.Error().Err(err).Msg("user.user")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	result.User = &user
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) userScores(c *fiber.Ctx) error {
+	type SyllabusWithParentID struct {
+		model.BaseSyllabus
+		ParentID *int `json:"-" db:"parent_id"`
+	}
+
+	type SyllabusWithParents struct {
+		SyllabusWithParentID
+		Parents []*SyllabusWithParentID `json:"parents"`
+	}
+
+	type Node struct {
+		Syllabus SyllabusWithParents `json:"syllabus"`
+		Score    *float64            `json:"score"`
+	}
+
+	var result struct {
+		Nodes []*Node `json:"nodes"`
+		Error any     `json:"error"`
+	}
+
+	rows, err := h.db.QueryxContext(c.UserContext(), `
+		SELECT s.id, s.parent_id, s.title, us.score, COALESCE(ss.prev_id, 0) = -1 AS is_assignment
+		FROM syllabus_structures ss
+		JOIN syllabuses s ON s.structure_id = ss.id
+		LEFT JOIN user_scores us ON us.user_id = ? AND us.syllabus_id = s.id
+	`, c.Params("userId"))
+	if err != nil {
+		log.Error().Err(err).Msg("user.userScores")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	m := make(map[int]*SyllabusWithParentID)
+	for rows.Next() {
+		var row struct {
+			SyllabusWithParentID
+			Score        *float64 `json:"score"`
+			IsAssignment bool     `db:"is_assignment"`
+		}
+		if err := rows.StructScan(&row); err != nil {
+			log.Error().Err(err).Msg("user.users")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+
+		if row.IsAssignment {
+			result.Nodes = append(result.Nodes, &Node{
+				Syllabus: SyllabusWithParents{row.SyllabusWithParentID, nil},
+				Score:    row.Score,
+			})
+		} else {
+			m[row.ID] = &row.SyllabusWithParentID
+		}
+	}
+	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
+
+	// fill parents
+	for _, node := range result.Nodes {
+		parentID := node.Syllabus.ParentID
+		for parentID != nil {
+			parent := m[*parentID]
+			node.Syllabus.Parents = append(node.Syllabus.Parents, parent)
+			parentID = parent.ParentID
+		}
+		slices.Reverse(node.Syllabus.Parents)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }
