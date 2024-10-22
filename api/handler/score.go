@@ -41,8 +41,7 @@ func (h *Handler) scores(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	users, err := h.getUsers(c.Context(), userIds)
-	if err == nil {
+	if users, err := h.getUsers(c.Context(), userIds); err == nil {
 		for _, node := range result.Nodes {
 			node.User = users[node.UserID]
 		}

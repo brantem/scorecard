@@ -72,11 +72,12 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 	}
 
 	if structureID, _ := c.ParamsInt("structureId"); structureID != 0 {
+		// TODO: Update prev_id
 		_, err := h.db.ExecContext(c.Context(), `
 			UPDATE syllabus_structures
-			SET prev_id = ?, title = ?
+			SET title = ?
 			WHERE id = ?
-		`, body.PrevID, body.Title, structureID)
+		`, body.Title, structureID)
 		if err != nil {
 			log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
 			result.Error = constant.RespInternalServerError
@@ -85,24 +86,21 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 	} else {
 		tx := h.db.MustBeginTx(c.Context(), nil)
 
-		// even if this record isn't inserted due to the conflict, the sequence will still increment.
-		_, err := tx.ExecContext(c.Context(), `
-			INSERT INTO syllabus_structures (prev_id, title)
-			VALUES (-1, 'Assignment')
-			ON CONFLICT (title) DO NOTHING
-		`, body.PrevID, body.Title)
-		if err != nil {
-			tx.Rollback()
-			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
-				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
-				return c.Status(fiber.StatusConflict).JSON(result)
+		if body.PrevID == nil {
+			_, err := tx.ExecContext(c.Context(), `
+				INSERT INTO syllabus_structures (prev_id, title)
+				VALUES (-1, 'Assignment')
+				ON CONFLICT (title) DO NOTHING
+			`)
+			if err != nil {
+				tx.Rollback()
+				log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
+				result.Error = constant.RespInternalServerError
+				return c.Status(fiber.StatusInternalServerError).JSON(result)
 			}
-			log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
-			result.Error = constant.RespInternalServerError
-			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 
-		_, err = tx.ExecContext(c.Context(), `
+		_, err := tx.ExecContext(c.Context(), `
 			INSERT INTO syllabus_structures (prev_id, title)
 			VALUES (?, ?)
 		`, body.PrevID, body.Title)

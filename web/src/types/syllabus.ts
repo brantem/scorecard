@@ -13,7 +13,7 @@ export type BaseSyllabus = {
 
 export type Syllabus = BaseSyllabus & {
   parentId: number | null;
-  structureId?: number;
+  structureId: number;
 };
 
 export type Score = {

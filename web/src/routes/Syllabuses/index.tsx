@@ -42,18 +42,19 @@ function Syllabuses() {
     }
   }, [fetcher.data]);
 
-  const structures = new Map();
-  const prevStructures = new Map();
+  const structures = new Map<Structure['id'], Structure>();
+  const prevStructures = new Map<Structure['prevId'], Structure>();
   data.structures.forEach((structure) => {
     structures.set(structure.id, structure);
     prevStructures.set(structure.prevId, structure);
   });
+
+  const generatedStructure = prevStructures.get(-1);
+
   const lastStructure = data.structures[data.structures.length - 1];
-  if (lastStructure) prevStructures.set(lastStructure.id, prevStructures.get(-1));
+  if (lastStructure) prevStructures.set(lastStructure.id, generatedStructure!);
 
-  const assignmentStructure = prevStructures.get(-1);
-
-  const syllabuses = new Map<number | null, Syllabus[]>();
+  const syllabuses = new Map<Syllabus['parentId'], Syllabus[]>();
   data.syllabuses.forEach((structure) => {
     syllabuses.set(structure.parentId, [...(syllabuses.get(structure.parentId) || []), structure]);
   });
@@ -137,9 +138,9 @@ function Syllabuses() {
                 </Tooltip>
               ) : null}
             </div>
-            {data.structures.length ? (
+            {generatedStructure ? (
               <div className="relative">
-                <Structure>Assignment</Structure>
+                <Structure>{generatedStructure.title}</Structure>
                 <Tooltip
                   content="This structure is automatically generated and can't be edited. It must always be last."
                   side="right"
@@ -179,7 +180,7 @@ function Syllabuses() {
                       <Tree.Item className="min-w-0 hover:bg-neutral-100" asChild>
                         <button
                           onClick={() => {
-                            saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId), null, syllabus);
+                            saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId)!, null, syllabus);
                           }}
                         >
                           Edit
@@ -199,7 +200,7 @@ function Syllabuses() {
                         </button>
                       </Tree.Item>
 
-                      {syllabus.structureId === assignmentStructure.id && (
+                      {syllabus.structureId === generatedStructure!.id && (
                         <Tree.Item className="ml-4 hover:bg-neutral-100" asChild>
                           <Link to={`/syllabuses/${syllabus.id}/scores`}>Score</Link>
                         </Tree.Item>
@@ -207,10 +208,10 @@ function Syllabuses() {
                     </>
                   )}
                   renderAdd={(parent) => {
-                    const structureId = parent?.structureId;
-                    if (assignmentStructure && structureId === assignmentStructure.id) return null;
+                    const structureId = parent?.structureId || null;
+                    if (lastStructure && structureId === generatedStructure!.id) return null;
 
-                    const structure = parent ? prevStructures.get(structureId) : prevStructures.get(null);
+                    const structure = prevStructures.get(structureId)!;
 
                     return (
                       <Tree.Item
@@ -233,10 +234,10 @@ function Syllabuses() {
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <Button
                   className="pl-2.5 text-sm"
-                  onClick={() => saveSyllabusModalRef.current?.onOpen(prevStructures.get(null), null, null)}
+                  onClick={() => saveSyllabusModalRef.current?.onOpen(prevStructures.get(null)!, null, null)}
                 >
                   <PlusIcon className="size-5" />
-                  <span>Add {prevStructures.get(null).title}</span>
+                  <span>Add {prevStructures.get(null)!.title}</span>
                 </Button>
               </div>
             )
