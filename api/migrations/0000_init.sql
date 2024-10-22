@@ -1,11 +1,11 @@
+-- The lack of a foreign key for prev_id is intentional, as a generated row will have -1 as the value of prev_id
 CREATE TABLE IF NOT EXISTS syllabus_structures (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   prev_id INTEGER,
   title TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (title),
-  FOREIGN KEY (prev_id) REFERENCES syllabus_structures(id) ON DELETE CASCADE
+  UNIQUE (title)
 );
 
 CREATE TRIGGER IF NOT EXISTS updated_at
