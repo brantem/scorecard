@@ -78,17 +78,17 @@ function Scorecard() {
                 <div className="flex h-full items-center pl-2.5">Total Score</div>
               </div>
 
-              <div className="grid grid-cols-[1fr_110px] items-center divide-y divide-neutral-200">
+              <div className="grid grid-cols-[1fr_110px] items-center">
                 {children.map((child) => (
-                  <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center">
+                  <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center border-neutral-200 [&:not(:first-child)]:border-t">
                     <span className="col-span-7 pl-2.5">{child.title}</span>
-                    <div className="flex h-full items-center border-l px-2.5 tabular-nums">
+                    <div className="flex h-full items-center border-l border-neutral-200 px-2.5 tabular-nums">
                       {scores.get(child.id) || 0}
                     </div>
                   </div>
                 ))}
                 <div
-                  className="col-start-2 flex h-full items-center justify-center !border-t-0 border-l px-2.5 tabular-nums"
+                  className="col-start-2 flex h-full items-center justify-center border-l border-neutral-200 px-2.5 tabular-nums"
                   style={{ gridRow: `1 / span ${children.length}` }}
                 >
                   {scores.get(structure.id)}
@@ -105,15 +105,17 @@ function Scorecard() {
             <div className="flex h-full items-center pl-2.5">Total Score</div>
           </div>
 
-          <div className="grid grid-cols-[1fr_110px] items-center divide-y divide-neutral-200 overflow-hidden rounded-b-lg border border-neutral-200">
+          <div className="grid grid-cols-[1fr_110px] items-center overflow-hidden rounded-b-lg border border-neutral-200">
             {roots.map((structure) => (
-              <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center">
+              <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center border-neutral-200 [&:not(:first-child)]:border-t">
                 <span className="col-span-7 pl-2.5">{structure.title}</span>
-                <div className="flex h-full items-center border-l px-2.5 tabular-nums">{scores.get(structure.id)}</div>
+                <div className="flex h-full items-center border-l border-neutral-200 px-2.5 tabular-nums">
+                  {scores.get(structure.id)}
+                </div>
               </div>
             ))}
             <div
-              className="col-start-2 flex h-full items-center justify-center !border-t-0 border-l px-2.5 tabular-nums"
+              className="col-start-2 flex h-full items-center justify-center border-l border-neutral-200 px-2.5 tabular-nums"
               style={{ gridRow: `1 / span ${roots.length}` }}
             >
               {data.scorecard.score}
