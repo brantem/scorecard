@@ -27,7 +27,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
 
   const [data, setData] = useState<{ node: Score } | null>(null);
 
-  const { register, handleSubmit, formState, setValue, reset, getValues } = useForm({
+  const { register, handleSubmit, formState, setValue, reset } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: { score: 0 },
   });
@@ -48,8 +48,6 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
       alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
     }
   }, [fetcher.data]);
-
-  console.log(formState.errors, getValues());
 
   return (
     <Modal
