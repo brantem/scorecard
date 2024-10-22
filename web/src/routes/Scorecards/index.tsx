@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from 'react-router-dom';
+import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 import { InformationCircleIcon } from '@heroicons/react/16/solid';
 import dayjs from 'dayjs';
@@ -10,6 +10,7 @@ import type { Scorecard as _Scorecard } from 'types/scorecard';
 
 function Scorecards() {
   const data = useLoaderData() as { canGenerate: boolean; scorecards: Omit<_Scorecard, 'items'>[] };
+  const fetcher = useFetcher();
 
   return (
     <>
@@ -17,7 +18,10 @@ function Scorecards() {
         <h1 className="font-semibold">Scorecards</h1>
 
         {data.canGenerate && (
-          <Button className="pl-2.5 text-sm" onClick={() => alert('TODO')}>
+          <Button
+            className="pl-2.5 text-sm"
+            onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+          >
             <ArrowPathIcon className="size-5" />
             <span>Generate</span>
           </Button>
@@ -83,6 +87,24 @@ Scorecards.loader = async () => {
     })(),
   ]);
   return { canGenerate, scorecards };
+};
+
+Scorecards.action = async ({ request }: ActionFunctionArgs) => {
+  try {
+    const { type } = await request.json();
+
+    let res;
+    switch (type) {
+      case 'GENERATE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/generate`, { method: 'POST' });
+        break;
+      default:
+        return { success: false, error: null };
+    }
+    return await res.json();
+  } catch {
+    return { success: false, error: { code: 'INTERNAL_SERVER_ERROR' } };
+  }
 };
 
 export default Scorecards;

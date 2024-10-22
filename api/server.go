@@ -9,6 +9,7 @@ import (
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/db"
 	"github.com/brantem/scorecard/handler"
+	"github.com/brantem/scorecard/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -38,6 +39,8 @@ func main() {
 	}
 
 	db := db.New()
+	generator := scorecard.NewQueue(db)
+
 	app := fiber.New(fiber.Config{
 		AppName:               constant.AppID,
 		DisableStartupMessage: os.Getenv("APP_ENV") == "production",
@@ -69,7 +72,7 @@ func main() {
 	}))
 	app.Use(logger.New())
 
-	h := handler.New(db)
+	h := handler.New(db, generator)
 	h.Register(app)
 
 	go func() {

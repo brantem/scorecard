@@ -320,6 +320,54 @@ func (h *Handler) deleteScorecardStructure(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
+func (h *Handler) generateScorecards(c *fiber.Ctx) error {
+	var result struct {
+		Success bool `json:"success"`
+		Error   any  `json:"error"`
+	}
+
+	if scorecardID, _ := c.ParamsInt("scorecardId"); scorecardID > 0 {
+		var userID int
+		err := h.db.QueryRowContext(c.Context(), `
+			SELECT user_id
+			FROM scorecards s
+			WHERE id = ?
+		`, scorecardID).Scan(&userID)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.generateScorecards")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		h.generator.Add(c.Context(), userID, scorecardID)
+		result.Success = true
+	} else {
+		rows, err := h.db.QueryContext(c.Context(), `
+			SELECT DISTINCT us.user_id, COALESCE(s.id, 0)
+			FROM user_scores us
+			LEFT JOIN scorecards s ON s.user_id = us.user_id
+		`)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.generateScorecards")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			result.Success = true
+			var userID, scorecardID int
+			if err := rows.Scan(&userID, &scorecardID); err != nil {
+				log.Error().Err(err).Msg("scorecard.generateScorecards")
+				result.Error = constant.RespInternalServerError
+				return c.Status(fiber.StatusInternalServerError).JSON(result)
+			}
+			h.generator.Add(c.Context(), userID, scorecardID)
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
 func (h *Handler) scorecards(c *fiber.Ctx) error {
 	var result struct {
 		Nodes []*model.Scorecard `json:"nodes"`

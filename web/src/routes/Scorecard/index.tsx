@@ -1,4 +1,10 @@
-import { useLoaderData, redirect, type LoaderFunctionArgs } from 'react-router-dom';
+import {
+  useLoaderData,
+  useFetcher,
+  redirect,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 import { InformationCircleIcon } from '@heroicons/react/16/solid';
 import dayjs from 'dayjs';
@@ -10,6 +16,7 @@ import type * as types from 'types/scorecard';
 
 function Scorecard() {
   const data = useLoaderData() as { scorecard: types.Scorecard; structures: Omit<types.Structure, 'syllabus'>[] };
+  const fetcher = useFetcher();
 
   const structures = new Map<types.Structure['parentId'], typeof data.structures>();
   data.structures.forEach((structure) => {
@@ -43,7 +50,10 @@ function Scorecard() {
           </div>
         </div>
 
-        <Button className="pl-2.5 text-sm" onClick={() => alert('TODO')}>
+        <Button
+          className="pl-2.5 text-sm"
+          onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+        >
           <ArrowPathIcon className="size-5" />
           <span>Generate</span>
         </Button>
@@ -136,6 +146,26 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
   ]);
   if (!scorecard) return redirect('/');
   return { structures, scorecard };
+};
+
+Scorecard.action = async ({ request, params }: ActionFunctionArgs) => {
+  try {
+    const { type } = await request.json();
+
+    let res;
+    switch (type) {
+      case 'GENERATE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/generate/${params.scorecardId}`, {
+          method: 'POST',
+        });
+        break;
+      default:
+        return { success: false, error: null };
+    }
+    return await res.json();
+  } catch {
+    return { success: false, error: { code: 'INTERNAL_SERVER_ERROR' } };
+  }
 };
 
 export default Scorecard;

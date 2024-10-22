@@ -17,35 +17,37 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
-        path: '',
+        path: '/',
         loader: Scorecards.loader,
+        action: Scorecards.action,
         element: <Scorecards />,
       },
       {
-        path: ':scorecardId',
+        path: '/:scorecardId',
         loader: Scorecard.loader,
+        action: Scorecard.action,
         element: <Scorecard />,
       },
       {
-        path: 'users',
+        path: '/users',
         loader: Users.loader,
         action: Users.action,
         element: <Users />,
       },
       {
-        path: 'syllabuses',
+        path: '/syllabuses',
         loader: Syllabuses.loader,
         action: Syllabuses.action,
         element: <Syllabuses />,
       },
       {
-        path: 'syllabuses/:syllabusId/scores',
+        path: '/syllabuses/:syllabusId/scores',
         loader: Scores.loader,
         action: Scores.action,
         element: <Scores />,
       },
       {
-        path: 'structures',
+        path: '/structures',
         loader: Structures.loader,
         action: Structures.action,
         element: <Structures />,

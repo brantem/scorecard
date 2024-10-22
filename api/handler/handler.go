@@ -1,16 +1,19 @@
 package handler
 
 import (
+	"github.com/brantem/scorecard/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
 
 type Handler struct {
 	db *sqlx.DB
+
+	generator *scorecard.Queue
 }
 
-func New(db *sqlx.DB) *Handler {
-	return &Handler{db}
+func New(db *sqlx.DB, generator *scorecard.Queue) *Handler {
+	return &Handler{db, generator}
 }
 
 func (h *Handler) Register(r *fiber.App) {
@@ -47,6 +50,7 @@ func (h *Handler) Register(r *fiber.App) {
 		structures.Delete("/:structureId", h.deleteScorecardStructure)
 
 		scorecards.Get("/", h.scorecards)
+		scorecards.Post("/generate/:scorecardId<int>?", h.generateScorecards)
 		scorecards.Get("/:scorecardId<int>", h.scorecard)
 	}
 }
