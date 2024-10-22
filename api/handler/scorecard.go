@@ -72,7 +72,7 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 		  JOIN t ON ss.parent_id = t.id
 		  WHERE (? = 0 OR t.depth < ?)
 		)
-		SELECT id, parent_id, title FROM t
+		SELECT id, parent_id, title, syllabus_id FROM t
 	`, depth, depth)
 	if err != nil {
 		log.Error().Err(err).Msg("scorecard.scorecardStructures")
@@ -96,8 +96,7 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	syllabuses, err := h.getScorecardStructureSyllabuses(c.Context(), syllabusIds)
-	if err == nil {
+	if syllabuses, err := h.getScorecardStructureSyllabuses(c.Context(), syllabusIds); err == nil {
 		for _, node := range result.Nodes {
 			if node.SyllabusID != nil {
 				node.Syllabus = syllabuses[*node.SyllabusID]
@@ -352,8 +351,7 @@ func (h *Handler) scorecards(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	users, err := h.getUsers(c.Context(), userIds)
-	if err == nil {
+	if users, err := h.getUsers(c.Context(), userIds); err == nil {
 		for _, node := range result.Nodes {
 			node.User = users[node.UserID]
 		}
