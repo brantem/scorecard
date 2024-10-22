@@ -152,7 +152,7 @@ Structures.loader = async () => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses`, { method: 'HEAD' });
         return parseInt(res.headers.get('X-Total-Count') || '0') > 0;
       } catch {
-        return [];
+        return false;
       }
     })(),
     (async () => {

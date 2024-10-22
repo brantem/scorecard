@@ -1,5 +1,5 @@
 import { Fragment, useRef } from 'react';
-import { Link, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router-dom';
+import { Link, useLoaderData, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router-dom';
 import { ChevronRightIcon } from '@heroicons/react/16/solid';
 
 import Table from 'components/Table';
@@ -89,6 +89,7 @@ Scores.loader = async ({ params }: LoaderFunctionArgs) => {
       }
     })(),
   ]);
+  if (!syllabus?.isAssignment) return redirect('/syllabuses');
   return { syllabus, scores };
 };
 

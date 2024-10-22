@@ -179,7 +179,8 @@ func (h *Handler) syllabuses(c *fiber.Ctx) error {
 func (h *Handler) syllabus(c *fiber.Ctx) error {
 	type Syllabus struct {
 		model.BaseSyllabus
-		Parents []*model.BaseSyllabus `json:"parents"`
+		Parents      []*model.BaseSyllabus `json:"parents"`
+		IsAssignment bool                  `json:"isAssignment" db:"is_assignment"`
 	}
 
 	var result struct {
@@ -199,7 +200,9 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 		  FROM syllabuses s
 		  INNER JOIN t ON s.id = t.parent_id
 		)
-		SELECT id, title FROM t
+		SELECT t.id, t.title, COALESCE(ss.prev_id, 0) = -1 AS is_assignment
+		FROM t
+		JOIN syllabus_structures ss ON ss.id = t.structure_id
 	`, syllabusID)
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabus")
@@ -209,7 +212,7 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var node model.BaseSyllabus
+		var node Syllabus
 		if err := rows.StructScan(&node); err != nil {
 			log.Error().Err(err).Msg("syllabus.syllabus")
 			result.Error = constant.RespInternalServerError
@@ -217,9 +220,9 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 		}
 
 		if node.ID == syllabusID {
-			result.Syllabus = &Syllabus{node, nil}
+			result.Syllabus = &node
 		} else {
-			result.Syllabus.Parents = append(result.Syllabus.Parents, &node)
+			result.Syllabus.Parents = append(result.Syllabus.Parents, &node.BaseSyllabus)
 		}
 	}
 

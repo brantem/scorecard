@@ -1,4 +1,4 @@
-import { useLoaderData, type LoaderFunctionArgs } from 'react-router-dom';
+import { useLoaderData, redirect, type LoaderFunctionArgs } from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 import { InformationCircleIcon } from '@heroicons/react/16/solid';
 import dayjs from 'dayjs';
@@ -134,6 +134,7 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
       }
     })(),
   ]);
+  if (!scorecard) return redirect('/');
   return { structures, scorecard };
 };
 
