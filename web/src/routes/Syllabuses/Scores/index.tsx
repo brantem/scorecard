@@ -3,7 +3,7 @@ import { Link, useLoaderData, redirect, type LoaderFunctionArgs, type ActionFunc
 import { ChevronRightIcon } from '@heroicons/react/16/solid';
 
 import Table from 'components/Table';
-import SaveModal, { type SaveModalHandle } from './SaveModal';
+import SaveModal, { type SaveModalHandle } from 'components/scores/SaveModal';
 
 import type { BaseSyllabus, Score } from 'types/syllabus';
 
@@ -24,7 +24,7 @@ function SyllabusScores() {
           <Link to="/syllabuses" className="hover:underline">
             Syllabuses
           </Link>
-          {[...data.syllabus.parents].reverse().map((parent) => (
+          {data.syllabus.parents.map((parent) => (
             <Fragment key={parent.id}>
               <ChevronRightIcon className="size-4" />
               <span>{parent.title}</span>
@@ -54,7 +54,7 @@ function SyllabusScores() {
                 <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
                   <button
                     className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                    onClick={() => saveModalRef.current?.onOpen(node)}
+                    onClick={() => saveModalRef.current?.onOpen(data.syllabus, node.user, node.score)}
                   >
                     {typeof node.score === 'number' ? 'Edit' : 'Add'}
                   </button>
@@ -65,7 +65,14 @@ function SyllabusScores() {
         </Table>
       </div>
 
-      <SaveModal syllabusId={data.syllabus.id} ref={saveModalRef} />
+      <SaveModal
+        ref={saveModalRef}
+        description={({ user, isEditing }) => (
+          <>
+            You are {isEditing ? 'editing the score' : 'adding a score'} for <b>{user.name}</b>
+          </>
+        )}
+      />
     </>
   );
 }

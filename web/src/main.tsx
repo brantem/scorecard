@@ -3,6 +3,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import Root from 'routes/Root';
 import Users from 'routes/Users';
+import UserScores from 'routes/Users/Scores';
 import Scorecards from 'routes/Scorecards';
 import Scorecard from 'routes/Scorecard';
 import Syllabuses from 'routes/Syllabuses';
@@ -33,6 +34,12 @@ const router = createBrowserRouter([
         loader: Users.loader,
         action: Users.action,
         element: <Users />,
+      },
+      {
+        path: '/users/:userId/scores',
+        loader: UserScores.loader,
+        action: UserScores.action,
+        element: <UserScores />,
       },
       {
         path: '/syllabuses',

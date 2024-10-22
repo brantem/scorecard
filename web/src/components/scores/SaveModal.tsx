@@ -8,24 +8,31 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import Input from 'components/Input';
 
-import type { Score } from 'types/syllabus';
+import type { User } from 'types/user';
+import type { BaseSyllabus } from 'types/syllabus';
 
 const schema = v.object({
   score: v.pipe(v.number(), v.minValue(0, 'Score must be 0 or higher.'), v.maxValue(100, 'Score must not exceed 100')),
 });
 
 export type SaveModalHandle = {
-  onOpen(node: Score): void;
+  onOpen(syllabus: BaseSyllabus, user: User, score: number | null): void;
+};
+
+type Data = {
+  syllabus: BaseSyllabus;
+  user: User;
+  isEditing: boolean;
 };
 
 type SaveModalProps = {
-  syllabusId: number;
+  description(data: Data): React.ReactNode;
 };
 
-export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ syllabusId }, ref) {
+export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ description }, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
-  const [data, setData] = useState<{ node: Score } | null>(null);
+  const [data, setData] = useState<Data | null>(null);
 
   const { register, handleSubmit, formState, setValue, reset } = useForm({
     resolver: valibotResolver(schema),
@@ -33,9 +40,10 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
   });
 
   useImperativeHandle(ref, () => ({
-    onOpen(node) {
-      setData({ node });
-      if (node) setValue('score', node.score || 0);
+    onOpen(syllabus, user, score) {
+      const isEditing = typeof score === 'number';
+      setData({ syllabus, user, isEditing });
+      if (isEditing) setValue('score', score || 0);
     },
   }));
 
@@ -51,12 +59,8 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
 
   return (
     <Modal
-      title={`${data?.node ? 'Edit' : 'Add'} Score`}
-      description={
-        <>
-          You are {data?.node ? 'editing the score' : 'adding a score'} for <b>{data?.node.user.name}</b>
-        </>
-      }
+      title={`${data?.isEditing ? 'Edit' : 'Add'} Score`}
+      description={data ? description(data) : null}
       isOpen={!!data}
       onClose={() => {
         setData(null);
@@ -68,7 +72,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
         onSubmit={handleSubmit((values) => {
           if (!data) return;
           fetcher.submit(
-            { type: 'SAVE', _syllabusId: syllabusId, _userId: data.node.user.id, ...values },
+            { type: 'SAVE', _syllabusId: data.syllabus.id, _userId: data.user.id, ...values },
             { method: 'PUT', encType: 'application/json' },
           );
         })}

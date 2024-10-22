@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { ActionFunctionArgs, useLoaderData, useFetcher } from 'react-router-dom';
+import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 
 import Button from 'components/Button';
@@ -55,6 +55,13 @@ function Users() {
                 <Table.Td>{user.name}</Table.Td>
 
                 <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                  <Link
+                    to={`/users/${user.id}/scores`}
+                    className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                  >
+                    Scores
+                  </Link>
+
                   <button
                     className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
                     onClick={() => saveModalRef.current?.onOpen(user)}
