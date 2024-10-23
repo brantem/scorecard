@@ -26,6 +26,9 @@ const router = createBrowserRouter([
       {
         path: '/:programId',
         loader: Program.loader,
+        shouldRevalidate() {
+          return false;
+        },
         element: <Program />,
         children: [
           {
