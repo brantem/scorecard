@@ -21,14 +21,11 @@ func TestReducerSetNodes(t *testing.T) {
 	r := NewReducer()
 	r.SetNodes([]*Node{&node2, &node1})
 
-	m := map[int]*Node{}
-
-	node1.children = []*Node{&node2}
-	m[node1.ID] = &node1
-
-	m[node2.ID] = &node2
-
-	assert.Equal(t, m, r.m)
+	assert.Len(t, r.m, 2)
+	assert.Equal(t, r.m[node1.ID].ID, node1.ID)
+	assert.Len(t, r.m[node1.ID].children, 1)
+	assert.Equal(t, r.m[node1.ID].children[0].ID, node2.ID)
+	assert.Equal(t, r.m[node2.ID].ID, node2.ID)
 }
 
 func TestReducerReduce(t *testing.T) {
@@ -52,21 +49,14 @@ func TestReducerReduce(t *testing.T) {
 	r.SetNodes([]*Node{&node3, &node1, &node2})
 	r.Reduce()
 
-	m := map[int]*Node{}
+	assert.Equal(t, (node2.Score+node3.Score)/2, node1.Score)
 
-	node1.Score = (node2.Score + node3.Score) / 2
-	node1.filled = true
-	node1.children = []*Node{&node2}
-	m[node1.ID] = &node1
+	// The following scenario should never occur
+	originalScore := node1.Score
+	node3.Score = 100
 
-	node2.filled = true
-	node1.children = []*Node{&node3}
-	m[node2.ID] = &node2
-
-	node3.filled = true
-	m[node3.ID] = &node3
-
-	assert.Equal(t, m, r.m)
+	r.Reduce() // Shouldn't change anything
+	assert.Equal(t, originalScore, node1.Score)
 }
 
 func TestReducerGetRoots(t *testing.T) {
@@ -84,9 +74,9 @@ func TestReducerGetRoots(t *testing.T) {
 	r := NewReducer()
 	r.SetNodes([]*Node{&node2, &node1})
 
-	node1.children = []*Node{&node2}
-
-	assert.Equal(t, []*Node{&node1}, r.GetRoots())
+	roots := r.GetRoots()
+	assert.Len(t, roots, 1)
+	assert.Equal(t, roots[0].ID, node1.ID)
 }
 
 func TestReducerGetByParentID(t *testing.T) {
@@ -104,5 +94,7 @@ func TestReducerGetByParentID(t *testing.T) {
 	r := NewReducer()
 	r.SetNodes([]*Node{&node2, &node1})
 
-	assert.Equal(t, []*Node{&node2}, r.GetByParentID(node1.ID))
+	nodes := r.GetByParentID(node1.ID)
+	assert.Len(t, nodes, 1)
+	assert.Equal(t, nodes[0].ID, node2.ID)
 }

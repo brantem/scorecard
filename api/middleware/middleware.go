@@ -11,6 +11,7 @@ type MiddlewareInterface interface {
 	SyllabusStructure(c *fiber.Ctx) error
 	Syllabus(c *fiber.Ctx) error
 	ScorecardStructure(c *fiber.Ctx) error
+	Scorecard(c *fiber.Ctx) error
 }
 
 type Middleware struct {

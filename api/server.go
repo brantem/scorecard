@@ -40,7 +40,7 @@ func main() {
 	}
 
 	db := db.New()
-	generator := scorecard.NewQueue(db)
+	generator := scorecard.NewGenerator(db)
 
 	app := fiber.New(fiber.Config{
 		AppName:               constant.AppID,

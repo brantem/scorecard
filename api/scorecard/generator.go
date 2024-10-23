@@ -11,40 +11,44 @@ import (
 	"github.com/vmihailenco/taskq/v3/memqueue"
 )
 
-type Queue struct {
+type GeneratorInterface interface {
+	Start()
+	Enqueue(ctx context.Context, programID, userID, scorecardID int)
+}
+
+type Generator struct {
 	db *sqlx.DB
 
 	queue taskq.Queue
 	task  *taskq.Task
 }
 
-func NewQueue(db *sqlx.DB) *Queue {
-
-	return &Queue{db: db}
+func NewGenerator(db *sqlx.DB) GeneratorInterface {
+	return &Generator{db: db}
 }
 
-func (q *Queue) Start() {
+func (g *Generator) Start() {
 	factory := memqueue.NewFactory()
 
-	q.queue = factory.RegisterQueue(&taskq.QueueOptions{
+	g.queue = factory.RegisterQueue(&taskq.QueueOptions{
 		Name:         "scorecard",
 		MaxNumWorker: 1,
 	})
 
-	q.task = taskq.RegisterTask(&taskq.TaskOptions{
+	g.task = taskq.RegisterTask(&taskq.TaskOptions{
 		Name:    "generate",
-		Handler: q.generate,
+		Handler: g.generate,
 	})
 }
 
-func (q *Queue) Add(ctx context.Context, programID, userID, scorecardID int) {
-	msg := q.task.WithArgs(ctx, programID, userID, scorecardID)
-	if err := q.queue.Add(msg); err != nil {
-		log.Error().Err(err).Msg("scorecard.Queue.generate.Add")
+func (g *Generator) Enqueue(ctx context.Context, programID, userID, scorecardID int) {
+	msg := g.task.WithArgs(ctx, programID, userID, scorecardID)
+	if err := g.queue.Add(msg); err != nil {
+		log.Error().Err(err).Msg("scorecard.Generator.Enqueue")
 	}
 }
 
-func (q *Queue) generate(programID, userID, scorecardID int) error {
+func (g *Generator) generate(programID, userID, scorecardID int) error {
 	type ScorecardStructure struct {
 		ID         int
 		ParentID   *int `db:"parent_id"`
@@ -61,13 +65,13 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 	go func() {
 		defer wg.Done()
 
-		rows, err := q.db.Queryx(`
+		rows, err := g.db.Queryx(`
 			SELECT id, parent_id, syllabus_id
 			FROM scorecard_structures
 			WHERE program_id = ?
 		`, programID)
 		if err != nil {
-			log.Error().Err(err).Msg("scorecard.Queue.generate")
+			log.Error().Err(err).Msg("scorecard.Generator.generate")
 			return
 		}
 		defer rows.Close()
@@ -88,13 +92,13 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 	go func() {
 		defer wg.Done()
 
-		rows, err := q.db.Query(`
+		rows, err := g.db.Query(`
 			SELECT syllabus_id, score
 			FROM user_scores
 			WHERE user_id = ?
 		`, userID)
 		if err != nil {
-			log.Error().Err(err).Msg("scorecard.Queue.generate")
+			log.Error().Err(err).Msg("scorecard.Generator.generate")
 			return
 		}
 		defer rows.Close()
@@ -133,7 +137,7 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 	reducer.SetNodes(nodes)
 	reducer.Reduce()
 
-	tx := q.db.MustBegin()
+	tx := g.db.MustBegin()
 
 	var score float64
 
@@ -151,7 +155,7 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 		`, programID, userID, score).Scan(&scorecardID)
 		if err != nil {
 			tx.Rollback()
-			log.Error().Err(err).Msg("scorecard.Queue.generate")
+			log.Error().Err(err).Msg("scorecard.Generator.generate")
 			return nil
 		}
 	} else {
@@ -162,7 +166,7 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 		`, score, scorecardID)
 		if err != nil {
 			tx.Rollback()
-			log.Error().Err(err).Msg("scorecard.Queue.generate")
+			log.Error().Err(err).Msg("scorecard.Generator.generate")
 			return nil
 		}
 	}
@@ -177,7 +181,7 @@ func (q *Queue) generate(programID, userID, scorecardID int) error {
 
 	if _, err := qb.RunWith(tx).Exec(); err != nil {
 		tx.Rollback()
-		log.Error().Err(err).Msg("scorecard.Queue.generate")
+		log.Error().Err(err).Msg("scorecard.Generator.generate")
 		return nil
 	}
 

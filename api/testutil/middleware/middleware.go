@@ -30,3 +30,7 @@ func (m *Middleware) Syllabus(c *fiber.Ctx) error {
 func (m *Middleware) ScorecardStructure(c *fiber.Ctx) error {
 	return c.Next()
 }
+
+func (m *Middleware) Scorecard(c *fiber.Ctx) error {
+	return c.Next()
+}

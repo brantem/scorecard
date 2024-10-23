@@ -10,10 +10,10 @@ import (
 type Handler struct {
 	db *sqlx.DB
 
-	generator *scorecard.Queue
+	generator scorecard.GeneratorInterface
 }
 
-func New(db *sqlx.DB, generator *scorecard.Queue) *Handler {
+func New(db *sqlx.DB, generator scorecard.GeneratorInterface) *Handler {
 	return &Handler{db, generator}
 }
 
@@ -67,7 +67,7 @@ func (h *Handler) Register(r *fiber.App, m middleware.MiddlewareInterface) {
 		structures.Delete("/:structureId<int>", m.ScorecardStructure, h.deleteScorecardStructure)
 
 		scorecards.Get("/", h.scorecards)
-		scorecards.Post("/generate/:scorecardId<int>?", h.generateScorecards)
-		scorecards.Get("/:scorecardId", h.scorecard)
+		scorecards.Post("/generate/:scorecardId<int>?", m.Scorecard, h.generateScorecards)
+		scorecards.Get("/:scorecardId", m.Scorecard, h.scorecard)
 	}
 }

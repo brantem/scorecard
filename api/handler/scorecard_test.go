@@ -12,6 +12,7 @@ import (
 	"github.com/brantem/scorecard/model"
 	"github.com/brantem/scorecard/testutil/db"
 	"github.com/brantem/scorecard/testutil/middleware"
+	"github.com/brantem/scorecard/testutil/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 )
@@ -215,6 +216,58 @@ func Test_deleteScorecardStructure(t *testing.T) {
 
 		resp, _ := app.Test(req)
 		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"success":true,"error":null}`, string(body))
+	})
+}
+
+func Test_generateScorecards(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("structureId != 0", func(t *testing.T) {
+		db, mock := db.New()
+		generator := scorecard.NewGenerator()
+		h := New(db, generator)
+
+		mock.ExpectQuery("SELECT .+ FROM scorecards").
+			WithArgs(1, 2).
+			WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(3))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("POST", "/v1/programs/1/scorecards/generate/2", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal([]int{1}, generator.EnqueueProgramID)
+		assert.Equal([]int{3}, generator.EnqueueUserID)
+		assert.Equal([]int{2}, generator.EnqueueScorecardID)
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"success":true,"error":null}`, string(body))
+	})
+
+	t.Run("structureId == 0", func(t *testing.T) {
+		db, mock := db.New()
+		generator := scorecard.NewGenerator()
+		h := New(db, generator)
+
+		mock.ExpectQuery("SELECT .+ FROM syllabus_structures").
+			WithArgs(1).
+			WillReturnRows(sqlmock.NewRows([]string{"user_id", "scorecard_id"}).AddRow(1, 1).AddRow(2, 0))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("POST", "/v1/programs/1/scorecards/generate", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal([]int{1, 1}, generator.EnqueueProgramID)
+		assert.Equal([]int{1, 2}, generator.EnqueueUserID)
+		assert.Equal([]int{1, 0}, generator.EnqueueScorecardID)
 		assert.Equal(fiber.StatusOK, resp.StatusCode)
 		body, _ := io.ReadAll(resp.Body)
 		assert.Equal(`{"success":true,"error":null}`, string(body))

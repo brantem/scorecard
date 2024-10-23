@@ -18,7 +18,7 @@ func TestQueue_generate(t *testing.T) {
 
 	t.Run("empty structures", func(t *testing.T) {
 		db, mock := db.New()
-		q := NewQueue(db)
+		g := Generator{db: db}
 
 		mock.MatchExpectationsInOrder(false)
 
@@ -30,13 +30,13 @@ func TestQueue_generate(t *testing.T) {
 			WithArgs(userID).
 			WillReturnRows(sqlmock.NewRows([]string{"syllabus_id", "score"}).AddRow(1, 100))
 
-		assert.Nil(q.generate(programID, userID, 0))
+		assert.Nil(g.generate(programID, userID, 0))
 		assert.Nil(mock.ExpectationsWereMet())
 	})
 
 	t.Run("empty assignments", func(t *testing.T) {
 		db, mock := db.New()
-		q := NewQueue(db)
+		g := Generator{db: db}
 
 		mock.MatchExpectationsInOrder(false)
 
@@ -48,13 +48,13 @@ func TestQueue_generate(t *testing.T) {
 			WithArgs(userID).
 			WillReturnRows(sqlmock.NewRows([]string{"syllabus_id", "score"}))
 
-		assert.Nil(q.generate(programID, userID, 0))
+		assert.Nil(g.generate(programID, userID, 0))
 		assert.Nil(mock.ExpectationsWereMet())
 	})
 
 	t.Run("insert", func(t *testing.T) {
 		db, mock := db.New()
-		q := NewQueue(db)
+		g := Generator{db: db}
 
 		mock.MatchExpectationsInOrder(false)
 
@@ -87,13 +87,13 @@ func TestQueue_generate(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		assert.Nil(q.generate(programID, userID, 0))
+		assert.Nil(g.generate(programID, userID, 0))
 		assert.Nil(mock.ExpectationsWereMet())
 	})
 
 	t.Run("update", func(t *testing.T) {
 		db, mock := db.New()
-		q := NewQueue(db)
+		g := Generator{db: db}
 
 		mock.MatchExpectationsInOrder(false)
 
@@ -126,7 +126,7 @@ func TestQueue_generate(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		assert.Nil(q.generate(programID, userID, scorecardID))
+		assert.Nil(g.generate(programID, userID, scorecardID))
 		assert.Nil(mock.ExpectationsWereMet())
 	})
 

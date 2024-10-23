@@ -352,18 +352,14 @@ func (h *Handler) generateScorecards(c *fiber.Ctx) error {
 			  AND id = ?
 		`, programID, scorecardID).Scan(&userID)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				result.Error = constant.RespNotFound
-				return c.Status(fiber.StatusNotFound).JSON(result)
-			}
 			log.Error().Err(err).Msg("scorecard.generateScorecards")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
-		h.generator.Add(c.UserContext(), programID, userID, scorecardID)
+		h.generator.Enqueue(c.UserContext(), programID, userID, scorecardID)
 	} else {
 		rows, err := h.db.QueryContext(c.UserContext(), `
-			SELECT DISTINCT us.user_id, COALESCE(s2.id, 0)
+			SELECT DISTINCT us.user_id, COALESCE(s2.id, 0) AS scorecard_id
 			FROM syllabus_structures ss
 			JOIN syllabuses s ON s.structure_id = ss.id
 			JOIN user_scores us ON us.syllabus_id = s.id
@@ -384,7 +380,7 @@ func (h *Handler) generateScorecards(c *fiber.Ctx) error {
 				result.Error = constant.RespInternalServerError
 				return c.Status(fiber.StatusInternalServerError).JSON(result)
 			}
-			h.generator.Add(c.UserContext(), programID, userID, scorecardID)
+			h.generator.Enqueue(c.UserContext(), programID, userID, scorecardID)
 		}
 	}
 
