@@ -16,9 +16,11 @@ import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import type { User } from 'types/user';
 
+const LIMIT = 10;
+
 function Users() {
   const params = useParams();
-  const data = useLoaderData() as { users: User[] };
+  const data = useLoaderData() as { users: { totalCount: number; nodes: User[] } };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
   const saveModalRef = useRef<SaveModalHandle>(null);
@@ -42,7 +44,7 @@ function Users() {
       <div className="flex items-start justify-between p-4 pb-0">
         <div className="flex flex-col gap-1">
           <h2 className="font-semibold">Users</h2>
-          <span className="inline-block text-sm text-neutral-500">{data.users.length} Users</span>
+          <span className="inline-block text-sm text-neutral-500">{data.users.totalCount} Users</span>
         </div>
 
         <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
@@ -62,15 +64,15 @@ function Users() {
           </thead>
 
           <tbody>
-            {data.users.length ? (
+            {data.users.nodes.length ? (
               <>
-                {data.users.map((user) => (
-                  <tr key={user.id}>
-                    <Table.Td>{user.name}</Table.Td>
+                {data.users.nodes.map((node) => (
+                  <tr key={node.id}>
+                    <Table.Td>{node.name}</Table.Td>
 
                     <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
                       <Link
-                        to={`/${params.programId}/users/${user.id}/scores`}
+                        to={`/${params.programId}/users/${node.id}/scores`}
                         className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
                       >
                         Scores
@@ -78,14 +80,14 @@ function Users() {
 
                       <button
                         className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                        onClick={() => saveModalRef.current?.open(user)}
+                        onClick={() => saveModalRef.current?.open(node)}
                       >
                         Edit
                       </button>
 
                       <button
                         className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                        onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: user.id })}
+                        onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: node.id })}
                       >
                         Delete
                       </button>
@@ -93,7 +95,7 @@ function Users() {
                   </tr>
                 ))}
 
-                {[...new Array(10 - data.users.length)].map((_, i) => (
+                {[...new Array(LIMIT - data.users.nodes.length)].map((_, i) => (
                   <tr key={i}>
                     <td className="h-12" colSpan={2} />
                   </tr>
@@ -119,12 +121,24 @@ function Users() {
   );
 }
 
-Users.loader = async ({ params }: LoaderFunctionArgs) => {
+Users.loader = async ({ request, params }: LoaderFunctionArgs) => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users`);
-    return { users: (await res.json()).nodes };
+    const page = parseInt(new URL(request.url).searchParams.get('page') || '1') - 1;
+    const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users?limit=${LIMIT}&offset=${page * LIMIT}`;
+    const res = await fetch(url);
+    return {
+      users: {
+        totalCount: parseInt(res.headers.get('X-Total-Count') || '0'),
+        nodes: (await res.json()).nodes,
+      },
+    };
   } catch {
-    return { users: [] };
+    return {
+      users: {
+        totalCount: 0,
+        nodes: [],
+      },
+    };
   }
 };
 

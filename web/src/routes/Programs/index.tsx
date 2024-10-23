@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import { Link, useLoaderData, useFetcher, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 
 import Table from 'components/Table';
@@ -9,8 +9,10 @@ import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import { Program } from 'types/program';
 
+const LIMIT = 10;
+
 function Programs() {
-  const data = useLoaderData() as { programs: Program[] };
+  const data = useLoaderData() as { programs: { totalCount: number; nodes: Program[] } };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
   const saveModalRef = useRef<SaveModalHandle>(null);
@@ -39,7 +41,7 @@ function Programs() {
         <div className="flex items-start justify-between p-4 pb-0">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">Programs</h2>
-            <span className="inline-block text-sm text-neutral-500">{data.programs.length} Programs</span>
+            <span className="inline-block text-sm text-neutral-500">{data.programs.totalCount} Programs</span>
           </div>
 
           <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
@@ -58,9 +60,9 @@ function Programs() {
             </thead>
 
             <tbody>
-              {data.programs.length ? (
+              {data.programs.nodes.length ? (
                 <>
-                  {data.programs.map((node) => (
+                  {data.programs.nodes.map((node) => (
                     <tr key={node.id}>
                       <Table.Td>
                         <Link to={`/${node.id}`} className="w-full hover:underline">
@@ -88,7 +90,7 @@ function Programs() {
                     </tr>
                   ))}
 
-                  {[...new Array(10 - data.programs.length)].map((_, i) => (
+                  {[...new Array(LIMIT - data.programs.nodes.length)].map((_, i) => (
                     <tr key={i}>
                       <td className="h-12" colSpan={2} />
                     </tr>
@@ -115,12 +117,23 @@ function Programs() {
   );
 }
 
-Programs.loader = async () => {
+Programs.loader = async ({ request }: LoaderFunctionArgs) => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs`);
-    return { programs: (await res.json()).nodes };
+    const page = parseInt(new URL(request.url).searchParams.get('page') || '1') - 1;
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs?limit=${LIMIT}&offset=${page * LIMIT}`);
+    return {
+      programs: {
+        totalCount: parseInt(res.headers.get('X-Total-Count') || '0'),
+        nodes: (await res.json()).nodes,
+      },
+    };
   } catch {
-    return { programs: [] };
+    return {
+      programs: {
+        totalCount: 0,
+        nodes: [],
+      },
+    };
   }
 };
 

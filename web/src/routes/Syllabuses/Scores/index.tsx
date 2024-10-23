@@ -19,9 +19,11 @@ type Syllabus = BaseSyllabus & {
   parents: BaseSyllabus[];
 };
 
+const LIMIT = 10;
+
 function SyllabusScores() {
   const params = useParams();
-  const data = useLoaderData() as { syllabus: Syllabus; scores: Score[] };
+  const data = useLoaderData() as { syllabus: Syllabus; scores: { totalCount: number; nodes: Score[] } };
 
   const saveModalRef = useRef<SaveModalHandle>(null);
 
@@ -63,7 +65,7 @@ function SyllabusScores() {
           </thead>
 
           <tbody>
-            {data.scores.map((node) => (
+            {data.scores.nodes.map((node) => (
               <tr key={node.user.id}>
                 <Table.Td>{node.user.name}</Table.Td>
                 <Table.Td className="tabular-nums">
@@ -81,7 +83,7 @@ function SyllabusScores() {
               </tr>
             ))}
 
-            {[...new Array(10 - data.scores.length)].map((_, i) => (
+            {[...new Array(LIMIT - data.scores.nodes.length)].map((_, i) => (
               <tr key={i}>
                 <td className="h-12" colSpan={3} />
               </tr>
@@ -102,13 +104,12 @@ function SyllabusScores() {
   );
 }
 
-SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
+SyllabusScores.loader = async ({ request, params }: LoaderFunctionArgs) => {
   const [syllabus, scores] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}`,
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}`;
+        const res = await fetch(url);
         return (await res.json()).syllabus;
       } catch {
         return null;
@@ -116,10 +117,13 @@ SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
     })(),
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}/scores`,
-        );
-        return (await res.json()).nodes;
+        const page = parseInt(new URL(request.url).searchParams.get('page') || '1') - 1;
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}/scores?limit=${LIMIT}&offset=${page * LIMIT}`;
+        const res = await fetch(url);
+        return {
+          totalCount: parseInt(res.headers.get('X-Total-Count') || '0'),
+          nodes: (await res.json()).nodes,
+        };
       } catch {
         return [];
       }
