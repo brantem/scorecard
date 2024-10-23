@@ -5,7 +5,12 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/v1/programs/1/users
+  url: {{baseUrl}}/v1/programs/1/users?limit=10&offset=0
   body: none
   auth: none
+}
+
+params:query {
+  limit: 10
+  offset: 0
 }

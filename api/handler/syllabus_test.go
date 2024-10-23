@@ -402,28 +402,74 @@ func Test_deleteSyllabus(t *testing.T) {
 }
 
 func Test_syllabusScores(t *testing.T) {
-	db, mock := db.New()
-	h := New(db, nil)
+	assert := assert.New(t)
 
-	mock.ExpectQuery("SELECT .+ FROM users .+ JOIN user_scores").
-		WithArgs("2").
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "score"}).AddRow(1, nil))
+	t.Run("HEAD", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
 
-	mock.ExpectQuery(`SELECT .+ FROM users WHERE id IN \(\?\)`).
-		WithArgs(1).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "User 1"))
+		mock.ExpectQuery(`SELECT COUNT\(u.id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	app := fiber.New()
-	h.Register(app, middleware.New())
+		app := fiber.New()
+		h.Register(app, middleware.New())
 
-	req := httptest.NewRequest("GET", "/v1/programs/1/syllabuses/2/scores", nil)
+		req := httptest.NewRequest("HEAD", "/v1/programs/1/syllabuses/2/scores", nil)
 
-	resp, _ := app.Test(req)
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-	assert.Equal(t, "1", resp.Header.Get("X-Total-Count"))
-	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"nodes":[{"user":{"id":1,"name":"User 1"},"score":null}],"error":null}`, string(body))
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(u.id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs/1/syllabuses/2/scores", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("0", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[],"error":null}`, string(body))
+	})
+
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(u.id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+		mock.ExpectQuery("SELECT .+ FROM users .+ JOIN user_scores").
+			WithArgs("2").
+			WillReturnRows(sqlmock.NewRows([]string{"user_id", "score"}).AddRow(1, nil))
+
+		mock.ExpectQuery(`SELECT .+ FROM users WHERE id IN \(\?\)`).
+			WithArgs(1).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "User 1"))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs/1/syllabuses/2/scores", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[{"user":{"id":1,"name":"User 1"},"score":null}],"error":null}`, string(body))
+	})
+
 }
 
 func Test_saveScore(t *testing.T) {

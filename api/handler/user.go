@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
@@ -44,6 +45,9 @@ func (h *Handler) getUsers(ctx context.Context, ids []int) (map[int]*model.User,
 	return m, nil
 }
 
+// ?limit int
+// ?offset int
+
 func (h *Handler) users(c *fiber.Ctx) error {
 	var result struct {
 		Nodes []*model.User `json:"nodes"`
@@ -51,11 +55,41 @@ func (h *Handler) users(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.User{}
 
-	rows, err := h.db.QueryxContext(c.UserContext(), `
-		SELECT id, name
-		FROM users
-		WHERE program_id = ?
-	`, c.Params("programId"))
+	qb := sq.Select().From("users").
+		Where("program_id = ?", c.Params("programId"))
+
+	var totalCount int
+	if err := qb.Column("COUNT(id)").RunWith(h.db).QueryRowContext(c.UserContext()).Scan(&totalCount); err != nil {
+		log.Error().Err(err).Msg("user.users")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	c.Set("X-Total-Count", strconv.Itoa(totalCount))
+
+	if c.Method() == fiber.MethodHead {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	if totalCount == 0 {
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+
+	if v := c.QueryInt("limit"); v > 0 {
+		qb = qb.Limit(uint64(v))
+	}
+
+	if v := c.QueryInt("offset"); v > 0 {
+		qb = qb.Offset(uint64(v))
+	}
+
+	query, args, err := qb.Columns("id", "name").OrderBy("rowid ASC").ToSql()
+	if err != nil {
+		log.Error().Err(err).Msg("user.users")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	rows, err := h.db.QueryxContext(c.UserContext(), query, args...)
 	if err != nil {
 		log.Error().Err(err).Msg("user.users")
 		result.Error = constant.RespInternalServerError
@@ -72,7 +106,6 @@ func (h *Handler) users(c *fiber.Ctx) error {
 		}
 		result.Nodes = append(result.Nodes, &node)
 	}
-	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }

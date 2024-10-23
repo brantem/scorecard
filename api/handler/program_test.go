@@ -15,23 +15,68 @@ import (
 )
 
 func Test_programs(t *testing.T) {
-	db, mock := db.New()
-	h := New(db, nil)
+	assert := assert.New(t)
 
-	mock.ExpectQuery("SELECT .+ FROM programs").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow(1, "Program 1"))
+	t.Run("HEAD", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
 
-	app := fiber.New()
-	h.Register(app, middleware.New())
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM programs`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	req := httptest.NewRequest("GET", "/v1/programs", nil)
+		app := fiber.New()
+		h.Register(app, middleware.New())
 
-	resp, _ := app.Test(req)
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-	assert.Equal(t, "1", resp.Header.Get("X-Total-Count"))
-	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"nodes":[{"id":1,"title":"Program 1"}],"error":null}`, string(body))
+		req := httptest.NewRequest("HEAD", "/v1/programs", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM programs`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("0", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[],"error":null}`, string(body))
+	})
+
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM programs`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+		mock.ExpectQuery("SELECT .+ FROM programs .+ LIMIT 1 OFFSET 1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow(2, "Program 2"))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs?limit=1&offset=1", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("2", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[{"id":2,"title":"Program 2"}],"error":null}`, string(body))
+	})
 }
 
 func Test_program(t *testing.T) {

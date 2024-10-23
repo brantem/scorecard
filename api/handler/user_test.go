@@ -49,24 +49,69 @@ func Test_getUsers(t *testing.T) {
 }
 
 func Test_users(t *testing.T) {
-	db, mock := db.New()
-	h := New(db, nil)
+	assert := assert.New(t)
 
-	mock.ExpectQuery("SELECT .+ FROM users").
-		WithArgs("1").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "User 1"))
+	t.Run("HEAD", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
 
-	app := fiber.New()
-	h.Register(app, middleware.New())
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	req := httptest.NewRequest("GET", "/v1/programs/1/users", nil)
+		app := fiber.New()
+		h.Register(app, middleware.New())
 
-	resp, _ := app.Test(req)
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-	assert.Equal(t, "1", resp.Header.Get("X-Total-Count"))
-	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"nodes":[{"id":1,"name":"User 1"}],"error":null}`, string(body))
+		req := httptest.NewRequest("HEAD", "/v1/programs/1/users", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs/1/users", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("0", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[],"error":null}`, string(body))
+	})
+
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM users`).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+		mock.ExpectQuery("SELECT .+ FROM users .+ LIMIT 1 OFFSET 1").
+			WithArgs("1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(2, "User 2"))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs/1/users?limit=1&offset=1", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("2", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[{"id":2,"name":"User 2"}],"error":null}`, string(body))
+	})
 }
 
 func Test_user(t *testing.T) {

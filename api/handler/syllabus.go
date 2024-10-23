@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
@@ -392,6 +393,9 @@ func (h *Handler) deleteSyllabus(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
+// ?limit int
+// ?offset int
+
 func (h *Handler) syllabusScores(c *fiber.Ctx) error {
 	type Node struct {
 		UserID int         `json:"-" db:"user_id"`
@@ -405,12 +409,41 @@ func (h *Handler) syllabusScores(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*Node{}
 
-	rows, err := h.db.QueryxContext(c.UserContext(), `
-		SELECT u.id AS user_id, us.score
-		FROM users u
-		LEFT JOIN user_scores us ON us.user_id = u.id
-		  AND us.syllabus_id = ?
-	`, c.Params("syllabusId"))
+	qb := sq.Select().From("users u").
+		LeftJoin("user_scores us ON us.user_id = u.id AND us.syllabus_id = ?", c.Params("syllabusId"))
+
+	var totalCount int
+	if err := qb.Column("COUNT(u.id)").RunWith(h.db).QueryRowContext(c.UserContext()).Scan(&totalCount); err != nil {
+		log.Error().Err(err).Msg("syllabus.syllabusScores")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	c.Set("X-Total-Count", strconv.Itoa(totalCount))
+
+	if c.Method() == fiber.MethodHead {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	if totalCount == 0 {
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+
+	if v := c.QueryInt("limit"); v > 0 {
+		qb = qb.Limit(uint64(v))
+	}
+
+	if v := c.QueryInt("offset"); v > 0 {
+		qb = qb.Offset(uint64(v))
+	}
+
+	query, args, err := qb.Columns("u.id AS user_id", "us.score").OrderBy("u.rowid ASC").ToSql()
+	if err != nil {
+		log.Error().Err(err).Msg("syllabus.syllabusScores")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	rows, err := h.db.QueryxContext(c.UserContext(), query, args...)
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabusScores")
 		result.Error = constant.RespInternalServerError
@@ -429,7 +462,6 @@ func (h *Handler) syllabusScores(c *fiber.Ctx) error {
 		result.Nodes = append(result.Nodes, &node)
 		userIds = append(userIds, node.UserID)
 	}
-	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
 	if users, err := h.getUsers(c.UserContext(), userIds); err == nil {
 		for _, node := range result.Nodes {

@@ -3,12 +3,16 @@ package handler
 import (
 	"strconv"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog/log"
 )
+
+// ?limit int
+// ?offset int
 
 func (h *Handler) programs(c *fiber.Ctx) error {
 	var result struct {
@@ -17,7 +21,40 @@ func (h *Handler) programs(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.Program{}
 
-	rows, err := h.db.QueryxContext(c.UserContext(), `SELECT id, title FROM programs`)
+	qb := sq.Select().From("programs")
+
+	var totalCount int
+	if err := qb.Column("COUNT(id)").RunWith(h.db).QueryRowContext(c.UserContext()).Scan(&totalCount); err != nil {
+		log.Error().Err(err).Msg("program.programs")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+	c.Set("X-Total-Count", strconv.Itoa(totalCount))
+
+	if c.Method() == fiber.MethodHead {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	if totalCount == 0 {
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+
+	if v := c.QueryInt("limit"); v > 0 {
+		qb = qb.Limit(uint64(v))
+	}
+
+	if v := c.QueryInt("offset"); v > 0 {
+		qb = qb.Offset(uint64(v))
+	}
+
+	query, args, err := qb.Columns("id", "title").OrderBy("rowid ASC").ToSql()
+	if err != nil {
+		log.Error().Err(err).Msg("program.programs")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
+	}
+
+	rows, err := h.db.QueryxContext(c.UserContext(), query, args...)
 	if err != nil {
 		log.Error().Err(err).Msg("program.programs")
 		result.Error = constant.RespInternalServerError
@@ -34,7 +71,6 @@ func (h *Handler) programs(c *fiber.Ctx) error {
 		}
 		result.Nodes = append(result.Nodes, &node)
 	}
-	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }
