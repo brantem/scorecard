@@ -18,26 +18,47 @@ import (
 )
 
 func Test_getScorecardStructureSyllabuses(t *testing.T) {
-	syllabus := model.ScorecardStructureSyllabus{
+	assert := assert.New(t)
+
+	syllabus1 := model.ScorecardStructureSyllabus{
 		BaseSyllabus: model.BaseSyllabus{
 			ID:    1,
 			Title: "Syllabus 1",
 		},
+		IsAssignment: false,
+	}
+	syllabus2 := model.ScorecardStructureSyllabus{
+		BaseSyllabus: model.BaseSyllabus{
+			ID:    2,
+			Title: "Syllabus 2",
+		},
 		IsAssignment: true,
 	}
 
-	// TODO: multiple users
+	t.Run("empty", func(t *testing.T) {
+		h := New(nil, nil)
 
-	db, mock := db.New()
-	h := New(db, nil)
+		m, err := h.getScorecardStructureSyllabuses(context.Background(), []int{})
+		assert.Empty(m)
+		assert.Nil(err)
+	})
 
-	mock.ExpectQuery("SELECT .+ FROM syllabuses .+ WHERE s.id IN (?)").
-		WithArgs(syllabus.ID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "is_assignment"}).AddRow(syllabus.ID, syllabus.Title, syllabus.IsAssignment))
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
 
-	m, err := h.getScorecardStructureSyllabuses(context.Background(), []int{1})
-	assert.Equal(t, map[int]*model.ScorecardStructureSyllabus{1: &syllabus}, m)
-	assert.Nil(t, err)
+		mock.ExpectQuery("SELECT .+ FROM syllabuses .+ WHERE s.id IN (?)").
+			WithArgs(syllabus1.ID, syllabus2.ID).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "title", "is_assignment"}).
+					AddRow(syllabus1.ID, syllabus1.Title, syllabus1.IsAssignment).
+					AddRow(syllabus2.ID, syllabus2.Title, syllabus2.IsAssignment),
+			)
+
+		m, err := h.getScorecardStructureSyllabuses(context.Background(), []int{syllabus1.ID, syllabus2.ID})
+		assert.Equal(map[int]*model.ScorecardStructureSyllabus{1: &syllabus1, 2: &syllabus2}, m)
+		assert.Nil(err)
+	})
 }
 
 func Test_scorecardStructures(t *testing.T) {

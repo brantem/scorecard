@@ -17,20 +17,35 @@ import (
 )
 
 func Test_getUsers(t *testing.T) {
-	user := model.User{ID: 1, Name: "User 1"}
+	assert := assert.New(t)
 
-	// TODO: multiple users
+	user1 := model.User{ID: 1, Name: "User 1"}
+	user2 := model.User{ID: 2, Name: "User 2"}
 
-	db, mock := db.New()
-	h := New(db, nil)
+	t.Run("empty", func(t *testing.T) {
+		h := New(nil, nil)
 
-	mock.ExpectQuery("SELECT .+ FROM users WHERE id IN (?)").
-		WithArgs(user.ID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(user.ID, user.Name))
+		m, err := h.getUsers(context.Background(), []int{})
+		assert.Empty(m)
+		assert.Nil(err)
+	})
 
-	m, err := h.getUsers(context.Background(), []int{1})
-	assert.Equal(t, map[int]*model.User{1: &user}, m)
-	assert.Nil(t, err)
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery(`SELECT .+ FROM users WHERE id IN \(\?, \?\)`).
+			WithArgs(user1.ID, user2.ID).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "name"}).
+					AddRow(user1.ID, user1.Name).
+					AddRow(user2.ID, user2.Name),
+			)
+
+		m, err := h.getUsers(context.Background(), []int{user1.ID, user2.ID})
+		assert.Equal(map[int]*model.User{1: &user1, 2: &user2}, m)
+		assert.Nil(err)
+	})
 }
 
 func Test_users(t *testing.T) {
