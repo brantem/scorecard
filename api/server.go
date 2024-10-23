@@ -9,6 +9,7 @@ import (
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/db"
 	"github.com/brantem/scorecard/handler"
+	"github.com/brantem/scorecard/middleware"
 	"github.com/brantem/scorecard/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -73,7 +74,8 @@ func main() {
 	app.Use(logger.New())
 
 	h := handler.New(db, generator)
-	h.Register(app)
+	m := middleware.New(db)
+	h.Register(app, m)
 
 	go func() {
 		if err := app.Listen(":" + os.Getenv("PORT")); err != nil {

@@ -28,7 +28,7 @@ func NewQueue(db *sqlx.DB) *Queue {
 
 	task := taskq.RegisterTask(&taskq.TaskOptions{
 		Name: "generate",
-		Handler: func(userID, scorecardID int) error {
+		Handler: func(programID, userID, scorecardID int) error {
 			type ScorecardStructure struct {
 				ID         int
 				ParentID   *int `db:"parent_id"`
@@ -48,7 +48,8 @@ func NewQueue(db *sqlx.DB) *Queue {
 				rows, err := db.Queryx(`
 					SELECT id, parent_id, syllabus_id
 					FROM scorecard_structures
-				`)
+					WHERE program_id = ?
+				`, programID)
 				if err != nil {
 					log.Error().Err(err).Msg("scorecard.Queue")
 					return
@@ -128,10 +129,10 @@ func NewQueue(db *sqlx.DB) *Queue {
 
 			if scorecardID == 0 {
 				err := tx.QueryRow(`
-					INSERT INTO scorecards (user_id, score)
-					VALUES (?, ?)
+					INSERT INTO scorecards (program_id, user_id, score)
+					VALUES (?, ?, ?)
 					RETURNING id
-				`, userID, score).Scan(&scorecardID)
+				`, programID, userID, score).Scan(&scorecardID)
 				if err != nil {
 					tx.Rollback()
 					log.Error().Err(err).Msg("scorecard.Queue")
@@ -172,8 +173,8 @@ func NewQueue(db *sqlx.DB) *Queue {
 	return &Queue{db, queue, task}
 }
 
-func (q *Queue) Add(ctx context.Context, userID, scorecardID int) {
-	msg := q.task.WithArgs(ctx, userID, scorecardID)
+func (q *Queue) Add(ctx context.Context, programID, userID, scorecardID int) {
+	msg := q.task.WithArgs(ctx, programID, userID, scorecardID)
 	if err := q.queue.Add(msg); err != nil {
 		log.Error().Err(err).Msg("scorecard.Queue.Add")
 	}

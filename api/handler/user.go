@@ -51,7 +51,11 @@ func (h *Handler) users(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.User{}
 
-	rows, err := h.db.QueryxContext(c.UserContext(), `SELECT id, name FROM users`)
+	rows, err := h.db.QueryxContext(c.Context(), `
+		SELECT id, name
+		FROM users
+		WHERE program_id = ?
+	`, c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("user.users")
 		result.Error = constant.RespInternalServerError
@@ -80,7 +84,7 @@ func (h *Handler) user(c *fiber.Ctx) error {
 	}
 
 	var user model.User
-	err := h.db.QueryRowxContext(c.UserContext(), `
+	err := h.db.QueryRowxContext(c.Context(), `
 		SELECT id, name
 		FROM users
 		WHERE id = ?
@@ -116,12 +120,13 @@ func (h *Handler) userScores(c *fiber.Ctx) error {
 		Error any     `json:"error"`
 	}
 
-	rows, err := h.db.QueryxContext(c.UserContext(), `
+	rows, err := h.db.QueryxContext(c.Context(), `
 		SELECT s.id, s.parent_id, s.title, us.score, COALESCE(ss.prev_id, 0) = -1 AS is_assignment
 		FROM syllabus_structures ss
 		JOIN syllabuses s ON s.structure_id = ss.id
 		LEFT JOIN user_scores us ON us.user_id = ? AND us.syllabus_id = s.id
-	`, c.Params("userId"))
+		WHERE ss.program_id = ?
+	`, c.Params("userId"), c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("user.userScores")
 		result.Error = constant.RespInternalServerError
@@ -182,7 +187,7 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 	}
 
 	if userID, _ := c.ParamsInt("userId"); userID != 0 {
-		_, err := h.db.ExecContext(c.UserContext(), `UPDATE users SET name = ? WHERE id = ?`, body.Name, userID)
+		_, err := h.db.ExecContext(c.Context(), `UPDATE users SET name = ? WHERE id = ?`, body.Name, userID)
 		if err != nil {
 			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
 				result.Error = fiber.Map{"code": "NAME_SHOULD_BE_UNIQUE"}
@@ -193,7 +198,10 @@ func (h *Handler) saveUser(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err := h.db.ExecContext(c.UserContext(), `INSERT INTO users (name) VALUES (?)`, body.Name)
+		_, err := h.db.ExecContext(c.Context(), `
+			INSERT INTO users (program_id, name)
+			VALUES (?, ?)
+		`, c.Params("programId"), body.Name)
 		if err != nil {
 			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
 				result.Error = fiber.Map{"code": "NAME_SHOULD_BE_UNIQUE"}

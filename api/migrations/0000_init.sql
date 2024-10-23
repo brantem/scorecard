@@ -1,11 +1,49 @@
--- The lack of a foreign key for prev_id is intentional, as a generated row will have -1 as the value of prev_id
-CREATE TABLE IF NOT EXISTS syllabus_structures (
+CREATE TABLE IF NOT EXISTS programs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  prev_id INTEGER,
   title TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (title)
+);
+
+CREATE TRIGGER IF NOT EXISTS updated_at
+AFTER UPDATE ON programs
+FOR EACH ROW
+BEGIN
+  UPDATE programs
+  SET updated_at = CURRENT_TIMESTAMP
+  WHERE id = OLD.id;
+END;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  program_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (program_id, name),
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+);
+
+CREATE TRIGGER IF NOT EXISTS updated_at
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+  UPDATE users
+  SET updated_at = CURRENT_TIMESTAMP
+  WHERE id = OLD.id;
+END;
+
+-- The lack of a foreign key for prev_id is intentional, as a generated row will have -1 as the value of prev_id
+CREATE TABLE IF NOT EXISTS syllabus_structures (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  program_id INTEGER NOT NULL,
+  prev_id INTEGER,
+  title TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (program_id, title),
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
 );
 
 CREATE TRIGGER IF NOT EXISTS updated_at
@@ -24,6 +62,7 @@ CREATE TABLE IF NOT EXISTS syllabuses (
   title TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (structure_id, title),
   FOREIGN KEY (parent_id) REFERENCES syllabuses(id) ON DELETE CASCADE,
   FOREIGN KEY (structure_id) REFERENCES syllabus_structures(id) ON DELETE CASCADE
 );
@@ -33,23 +72,6 @@ AFTER UPDATE ON syllabuses
 FOR EACH ROW
 BEGIN
   UPDATE syllabuses
-  SET updated_at = CURRENT_TIMESTAMP
-  WHERE id = OLD.id;
-END;
-
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (name)
-);
-
-CREATE TRIGGER IF NOT EXISTS updated_at
-AFTER UPDATE ON users
-FOR EACH ROW
-BEGIN
-  UPDATE users
   SET updated_at = CURRENT_TIMESTAMP
   WHERE id = OLD.id;
 END;
@@ -76,11 +98,13 @@ END;
 
 CREATE TABLE IF NOT EXISTS scorecard_structures (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  program_id INTEGER NOT NULL,
   parent_id INTEGER,
   title TEXT NOT NULL,
   syllabus_id INTEGER,
   created_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
   FOREIGN KEY (parent_id) REFERENCES scorecard_structures(id) ON DELETE CASCADE,
   FOREIGN KEY (syllabus_id) REFERENCES syllabuses(id) ON DELETE CASCADE
 );
@@ -96,10 +120,13 @@ END;
 
 CREATE TABLE IF NOT EXISTS scorecards (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  program_id INTEGER NOT NULL,
   user_id INTEGER NOT NULL,
   score REAL NOT NULL,
   is_outdated INTEGER NOT NULL DEFAULT 0,
   generated_at INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (program_id, user_id),
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -113,10 +140,10 @@ BEGIN
 END;
 
 CREATE TABLE IF NOT EXISTS scorecard_items (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
   scorecard_id INTEGER NOT NULL,
   structure_id INTEGER NOT NULL,
   score REAL NOT NULL,
+  UNIQUE (scorecard_id, structure_id),
   FOREIGN KEY (scorecard_id) REFERENCES scorecards(id) ON DELETE CASCADE,
   FOREIGN KEY (structure_id) REFERENCES scorecard_structures(id) ON DELETE CASCADE
 );

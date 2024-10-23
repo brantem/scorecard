@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
-import { useFetcher } from 'react-router-dom';
+import { useParams, useFetcher } from 'react-router-dom';
 import { ChevronRightIcon } from '@heroicons/react/16/solid';
 
 import Button from 'components/Button';
@@ -13,6 +13,7 @@ type SyllabusListProps = {
 };
 
 export default function SyllabusList({ parentId, onCompleted }: SyllabusListProps) {
+  const params = useParams();
   const fetcher = useFetcher();
 
   const [syllabuses, setSyllabuses] = useState<Map<Syllabus['parentId'], Syllabus[]>>(new Map());
@@ -21,7 +22,7 @@ export default function SyllabusList({ parentId, onCompleted }: SyllabusListProp
   // not efficient
   useEffect(() => {
     (async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses`);
       const nodes = (await res.json()).nodes as Syllabus[];
 
       const m = new Map();

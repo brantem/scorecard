@@ -19,7 +19,7 @@ function SyllabusScores() {
   return (
     <>
       <div className="flex flex-col gap-1 p-4 pb-0">
-        <h1 className="font-semibold">{data.syllabus.title}</h1>
+        <h2 className="font-semibold">{data.syllabus.title}</h2>
         <div className="flex items-center gap-1 text-sm text-neutral-500">
           <Link to="/syllabuses" className="hover:underline">
             Syllabuses
@@ -39,7 +39,7 @@ function SyllabusScores() {
             <tr>
               <Table.Th>Name</Table.Th>
               <Table.Th>Score</Table.Th>
-              <Table.Th className="w-32 [&>div]:justify-end">Actions</Table.Th>
+              <Table.Th className="w-24 [&>div]:justify-end">Actions</Table.Th>
             </tr>
           </thead>
 
@@ -48,7 +48,7 @@ function SyllabusScores() {
               <tr key={node.user.id}>
                 <Table.Td>{node.user.name}</Table.Td>
                 <Table.Td className="tabular-nums">
-                  {typeof node.score === 'number' ? node.score : <span className="text-neutral-300">-</span>}
+                  {typeof node.score === 'number' ? node.score : <span className="text-neutral-400">-</span>}
                 </Table.Td>
 
                 <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
@@ -81,7 +81,9 @@ SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
   const [syllabus, scores] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${params.syllabusId}`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}`,
+        );
         return (await res.json()).syllabus;
       } catch {
         return null;
@@ -89,7 +91,9 @@ SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${params.syllabusId}/scores`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${params.syllabusId}/scores`,
+        );
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -100,18 +104,21 @@ SyllabusScores.loader = async ({ params }: LoaderFunctionArgs) => {
   return { syllabus, scores };
 };
 
-SyllabusScores.action = async ({ request }: ActionFunctionArgs) => {
+SyllabusScores.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _userId, ...body } = await request.json();
 
     let res;
     switch (type) {
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${_syllabusId}/scores/${_userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId}/scores/${_userId}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+        );
         break;
       default:
         return { success: false, error: null };

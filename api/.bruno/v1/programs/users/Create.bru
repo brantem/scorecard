@@ -1,0 +1,17 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/v1/programs/1/users
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "User 1"
+  }
+}

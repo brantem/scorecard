@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/brantem/scorecard/middleware"
 	"github.com/brantem/scorecard/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -16,47 +17,56 @@ func New(db *sqlx.DB, generator *scorecard.Queue) *Handler {
 	return &Handler{db, generator}
 }
 
-func (h *Handler) Register(r *fiber.App) {
+func (h *Handler) Register(r *fiber.App, m middleware.MiddlewareInterface) {
 	v1 := r.Group("/v1")
 
-	users := v1.Group("/users")
-	users.Get("/", h.users)
-	users.Put("/:userId<int>?", h.saveUser)
+	programs := v1.Group("/programs")
+	programs.Get("/", h.programs)
+	programs.Put("/:programId<int>?", h.saveProgram)
 
-	userID := users.Group("/:userId<int>")
-	userID.Get("/", h.user)
-	userID.Get("/scores", h.userScores)
-	userID.Delete("/", h.deleteUser)
+	programID := programs.Group("/:programId<int>", m.Program)
+	programID.Get("/", h.program)
 
-	syllabuses := v1.Group("/syllabuses")
+	users := programID.Group("/users")
+	{
+		users.Get("/", h.users)
+		users.Put("/:userId<int>?", h.saveUser)
+
+		userID := users.Group("/:userId<int>", m.User)
+		userID.Get("/", h.user)
+		userID.Get("/scores", h.userScores)
+		userID.Delete("/", h.deleteUser)
+	}
+
+	syllabuses := programID.Group("/syllabuses")
 	{
 		structures := syllabuses.Group("/structures")
 		structures.Get("/", h.syllabusStructures)
-		structures.Put("/:structureId<int>?", h.saveSyllabusStructure)
-		structures.Delete("/:structureId", h.deleteSyllabusStructure)
+		structures.Put("/:structureId<int>?", m.SyllabusStructure, h.saveSyllabusStructure)
+		structures.Delete("/:structureId<int>", m.SyllabusStructure, h.deleteSyllabusStructure)
 
 		syllabuses.Get("/", h.syllabuses)
-		syllabuses.Put("/:syllabusId<int>?", h.saveSyllabus)
-		syllabuses.Delete("/:syllabusId", h.deleteSyllabus)
+		syllabuses.Put("/:syllabusId<int>?", m.Syllabus, h.saveSyllabus)
 
-		syllabusID := syllabuses.Group("/:syllabusId<int>")
+		syllabusID := syllabuses.Group("/:syllabusId<int>", m.Syllabus)
 		syllabusID.Get("/", h.syllabus)
+		syllabusID.Delete("/", h.deleteSyllabus)
 
 		scores := syllabusID.Group("/scores")
 		scores.Get("/", h.syllabusScores)
-		scores.Put("/:userId<int>", h.saveScore)
+		scores.Put("/:userId<int>", m.User, h.saveScore)
 	}
 
-	scorecards := v1.Group("/scorecards")
+	scorecards := programID.Group("/scorecards")
 	{
 		structures := scorecards.Group("/structures")
 		structures.Get("/", h.scorecardStructures)
-		structures.Post("/copy/:syllabusId<int>", h.copySyllabusesIntoStructures)
-		structures.Put("/:structureId<int>?", h.saveScorecardStructure)
-		structures.Delete("/:structureId", h.deleteScorecardStructure)
+		structures.Post("/copy/:syllabusId<int>", m.Syllabus, h.copySyllabusesIntoStructures)
+		structures.Put("/:structureId<int>?", m.ScorecardStructure, h.saveScorecardStructure)
+		structures.Delete("/:structureId<int>", m.ScorecardStructure, h.deleteScorecardStructure)
 
 		scorecards.Get("/", h.scorecards)
 		scorecards.Post("/generate/:scorecardId<int>?", h.generateScorecards)
-		scorecards.Get("/:scorecardId<int>", h.scorecard)
+		scorecards.Get("/:scorecardId", h.scorecard)
 	}
 }

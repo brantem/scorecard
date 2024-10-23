@@ -1,7 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
-import Root from 'routes/Root';
+import Programs from 'routes/Programs';
+import Program from 'routes/Program';
 import Users from 'routes/Users';
 import UserScores from 'routes/Users/Scores';
 import Scorecards from 'routes/Scorecards';
@@ -15,49 +16,61 @@ import './index.css';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Root />,
     children: [
       {
-        path: '/',
-        loader: Scorecards.loader,
-        action: Scorecards.action,
-        element: <Scorecards />,
+        index: true,
+        loader: Programs.loader,
+        action: Programs.action,
+        element: <Programs />,
       },
       {
-        path: '/:scorecardId',
-        loader: Scorecard.loader,
-        action: Scorecard.action,
-        element: <Scorecard />,
-      },
-      {
-        path: '/users',
-        loader: Users.loader,
-        action: Users.action,
-        element: <Users />,
-      },
-      {
-        path: '/users/:userId/scores',
-        loader: UserScores.loader,
-        action: UserScores.action,
-        element: <UserScores />,
-      },
-      {
-        path: '/syllabuses',
-        loader: Syllabuses.loader,
-        action: Syllabuses.action,
-        element: <Syllabuses />,
-      },
-      {
-        path: '/syllabuses/:syllabusId/scores',
-        loader: SyllabusScores.loader,
-        action: SyllabusScores.action,
-        element: <SyllabusScores />,
-      },
-      {
-        path: '/structures',
-        loader: Structures.loader,
-        action: Structures.action,
-        element: <Structures />,
+        path: '/:programId',
+        loader: Program.loader,
+        element: <Program />,
+        children: [
+          {
+            index: true,
+            loader: Scorecards.loader,
+            action: Scorecards.action,
+            element: <Scorecards />,
+          },
+          {
+            path: '/:programId/:scorecardId',
+            loader: Scorecard.loader,
+            action: Scorecard.action,
+            element: <Scorecard />,
+          },
+          {
+            path: '/:programId/users',
+            loader: Users.loader,
+            action: Users.action,
+            element: <Users />,
+          },
+          {
+            path: '/:programId/users/:userId/scores',
+            loader: UserScores.loader,
+            action: UserScores.action,
+            element: <UserScores />,
+          },
+          {
+            path: '/:programId/syllabuses',
+            loader: Syllabuses.loader,
+            action: Syllabuses.action,
+            element: <Syllabuses />,
+          },
+          {
+            path: '/:programId/syllabuses/:syllabusId/scores',
+            loader: SyllabusScores.loader,
+            action: SyllabusScores.action,
+            element: <SyllabusScores />,
+          },
+          {
+            path: '/:programId/structures',
+            loader: Structures.loader,
+            action: Structures.action,
+            element: <Structures />,
+          },
+        ],
       },
     ],
   },

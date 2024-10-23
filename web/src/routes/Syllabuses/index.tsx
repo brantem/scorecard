@@ -1,5 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { useLoaderData, useFetcher, type ActionFunctionArgs, Link } from 'react-router-dom';
+import {
+  useParams,
+  useLoaderData,
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+  Link,
+} from 'react-router-dom';
 import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { PlusIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/16/solid';
@@ -16,6 +23,7 @@ import { cn } from 'lib/helpers';
 import type { Structure, Syllabus } from 'types/syllabus';
 
 function Syllabuses() {
+  const params = useParams();
   const data = useLoaderData() as { structures: Structure[]; syllabuses: Syllabus[] };
   const fetcher = useFetcher();
 
@@ -202,7 +210,7 @@ function Syllabuses() {
 
                       {syllabus.structureId === generatedStructure!.id && (
                         <Tree.Item className="ml-4 hover:bg-neutral-100" asChild>
-                          <Link to={`/syllabuses/${syllabus.id}/scores`}>Score</Link>
+                          <Link to={`/${params.programId}/syllabuses/${syllabus.id}/scores`}>Score</Link>
                         </Tree.Item>
                       )}
                     </>
@@ -242,8 +250,8 @@ function Syllabuses() {
               </div>
             )
           ) : (
-            <div className="flex h-full items-center justify-center text-neutral-500">
-              You need to create the structures before adding any syllabuses
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-neutral-500">
+              <span>You need to create the structures before adding any syllabuses</span>
             </div>
           )}
         </div>
@@ -263,11 +271,13 @@ function Syllabuses() {
   );
 }
 
-Syllabuses.loader = async () => {
+Syllabuses.loader = async ({ params }: LoaderFunctionArgs) => {
   const [structures, syllabuses] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/structures`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures`,
+        );
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -275,7 +285,7 @@ Syllabuses.loader = async () => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses`);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -285,35 +295,49 @@ Syllabuses.loader = async () => {
   return { structures, syllabuses };
 };
 
-Syllabuses.action = async ({ request }: ActionFunctionArgs) => {
+Syllabuses.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _structureId, _syllabusId, ...body } = await request.json();
 
     let res;
     switch (type) {
       case 'SAVE_STRUCTURE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/structures/${_structureId || ''}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+        );
         break;
       case 'RESET_STRUCTURE':
       case 'DELETE_STRUCTURE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/structures/${_structureId || ''}`, {
-          method: 'DELETE',
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`,
+          {
+            method: 'DELETE',
+          },
+        );
         break;
       case 'SAVE_SYLLABUS':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${_syllabusId || ''}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+        );
         break;
       case 'RESET_SYLLABUS':
       case 'DELETE_SYLLABUS':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses/${_syllabusId || ''}`, { method: 'DELETE' });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`,
+          {
+            method: 'DELETE',
+          },
+        );
         break;
 
       default:

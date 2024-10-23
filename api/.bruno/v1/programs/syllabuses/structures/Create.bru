@@ -1,0 +1,18 @@
+meta {
+  name: Create
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/v1/programs/1/syllabuses/structures
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "prevId": null,
+    "title": "Structure 1"
+  }
+}

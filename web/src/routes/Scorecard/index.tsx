@@ -37,7 +37,7 @@ function Scorecard() {
     <>
       <div className="flex items-start justify-between p-4 pb-0">
         <div className="flex flex-col gap-1">
-          <h1 className="font-semibold">{data.scorecard.user.name}</h1>
+          <h2 className="font-semibold">{data.scorecard.user.name}</h2>
           <div className="flex items-center gap-2">
             <span className="text-sm text-neutral-500">
               {dayjs(data.scorecard.generatedAt).format('D MMM YYYY HH:mm')}
@@ -131,7 +131,9 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
   const [structures, scorecard] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
+        );
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -139,7 +141,9 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/${params.scorecardId}`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/${params.scorecardId}`,
+        );
         return (await res.json()).scorecard || null;
       } catch {
         return null;
@@ -157,9 +161,12 @@ Scorecard.action = async ({ request, params }: ActionFunctionArgs) => {
     let res;
     switch (type) {
       case 'GENERATE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/generate/${params.scorecardId}`, {
-          method: 'POST',
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate/${params.scorecardId}`,
+          {
+            method: 'POST',
+          },
+        );
         break;
       default:
         return { success: false, error: null };

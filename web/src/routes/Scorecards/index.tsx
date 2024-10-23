@@ -1,4 +1,11 @@
-import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import {
+  Link,
+  useParams,
+  useLoaderData,
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from 'react-router-dom';
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 import { InformationCircleIcon } from '@heroicons/react/16/solid';
 import dayjs from 'dayjs';
@@ -9,13 +16,14 @@ import Tooltip from 'components/Tooltip';
 import type { Scorecard as _Scorecard } from 'types/scorecard';
 
 function Scorecards() {
+  const params = useParams();
   const data = useLoaderData() as { canGenerate: boolean; scorecards: Omit<_Scorecard, 'items'>[] };
   const fetcher = useFetcher();
 
   return (
     <>
       <div className="flex items-start justify-between p-4 pb-0">
-        <h1 className="font-semibold">Scorecards</h1>
+        <h2 className="font-semibold">Scorecards</h2>
 
         {data.canGenerate && (
           <Button
@@ -33,7 +41,7 @@ function Scorecards() {
           {data.scorecards.map((scorecard) => (
             <Link
               key={scorecard.id}
-              to={`/${scorecard.id}`}
+              to={`/${params.programId}/${scorecard.id}`}
               className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200"
             >
               <div className="flex flex-1 items-center justify-center py-16 text-5xl font-black tabular-nums">
@@ -56,10 +64,10 @@ function Scorecards() {
           ))}
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-500">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-neutral-500">
           <span>You need to create the structures before generating any scorecards</span>
           <Button className="rounded-full" asChild>
-            <Link to="/structures">Structures</Link>
+            <Link to={`/${params.programId}/structures`}>Structures</Link>
           </Button>
         </div>
       )}
@@ -67,11 +75,16 @@ function Scorecards() {
   );
 }
 
-Scorecards.loader = async () => {
+Scorecards.loader = async ({ params }: LoaderFunctionArgs) => {
   const [canGenerate, scorecards] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures`, { method: 'HEAD' });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
+          {
+            method: 'HEAD',
+          },
+        );
         return parseInt(res.headers.get('X-Total-Count') || '0') > 0;
       } catch {
         return false;
@@ -79,7 +92,7 @@ Scorecards.loader = async () => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards`);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -89,14 +102,16 @@ Scorecards.loader = async () => {
   return { canGenerate, scorecards };
 };
 
-Scorecards.action = async ({ request }: ActionFunctionArgs) => {
+Scorecards.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type } = await request.json();
 
     let res;
     switch (type) {
       case 'GENERATE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/generate`, { method: 'POST' });
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate`, {
+          method: 'POST',
+        });
         break;
       default:
         return { success: false, error: null };

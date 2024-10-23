@@ -1,5 +1,12 @@
 import { useRef, useEffect } from 'react';
-import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import {
+  Link,
+  useParams,
+  useLoaderData,
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/16/solid';
 
@@ -14,6 +21,7 @@ import { cn } from 'lib/helpers';
 import type { Structure } from 'types/scorecard';
 
 function Structures() {
+  const params = useParams();
   const data = useLoaderData() as { canCreate: boolean; structures: Structure[] };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -125,7 +133,7 @@ function Structures() {
           <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-500">
             <span>You need to create the syllabuses before adding any structures</span>
             <Button className="rounded-full" asChild>
-              <Link to="/syllabuses">Syllabuses</Link>
+              <Link to={`/${params.programId}/syllabuses`}>Syllabuses</Link>
             </Button>
           </div>
         )}
@@ -145,11 +153,13 @@ function Structures() {
   );
 }
 
-Structures.loader = async () => {
+Structures.loader = async ({ params }: LoaderFunctionArgs) => {
   const [canCreate, structures] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/syllabuses`, { method: 'HEAD' });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses`, {
+          method: 'HEAD',
+        });
         return parseInt(res.headers.get('X-Total-Count') || '0') > 0;
       } catch {
         return false;
@@ -157,7 +167,9 @@ Structures.loader = async () => {
     })(),
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
+        );
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -167,31 +179,40 @@ Structures.loader = async () => {
   return { canCreate, structures };
 };
 
-Structures.action = async ({ request }: ActionFunctionArgs) => {
+Structures.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _structureId, ...body } = await request.json();
 
     let res;
     switch (type) {
       case 'COPY':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/copy/${_syllabusId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/copy/${_syllabusId}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+        );
         break;
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/${_structureId || ''}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+        );
         break;
       case 'RESET':
       case 'DELETE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/scorecards/structures/${_structureId || ''}`, {
-          method: 'DELETE',
-        });
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`,
+          {
+            method: 'DELETE',
+          },
+        );
         break;
       default:
         return { success: false, error: null };

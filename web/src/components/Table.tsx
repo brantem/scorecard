@@ -14,28 +14,22 @@ function Table({ children }: { children: React.ReactNode }) {
   );
 }
 
-type ThProps = {
-  className?: string;
-  children: React.ReactNode;
-};
+type ThProps = React.ComponentPropsWithoutRef<'th'>;
 
-function Th({ className, children }: ThProps) {
+function Th({ className, children, ...props }: ThProps) {
   return (
-    <th className={cn('h-12 whitespace-nowrap py-0 font-medium', className)}>
+    <th className={cn('h-12 whitespace-nowrap py-0 font-medium', className)} {...props}>
       <div className="flex size-full items-center px-3">{children}</div>
     </th>
   );
 }
 Table.Th = Th;
 
-type TdProps = {
-  className?: string;
-  children: React.ReactNode;
-};
+type TdProps = React.ComponentPropsWithoutRef<'td'>;
 
-function Td({ className, children }: TdProps) {
+function Td({ className, children, ...props }: TdProps) {
   return (
-    <td className={cn('h-12 whitespace-nowrap py-0 text-neutral-700', className)}>
+    <td className={cn('h-12 whitespace-nowrap py-0 text-neutral-700', className)} {...props}>
       <div className="flex h-full items-center px-3">{children}</div>
     </td>
   );

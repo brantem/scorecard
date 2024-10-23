@@ -1,5 +1,12 @@
 import { useRef, useEffect } from 'react';
-import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
+import {
+  Link,
+  useParams,
+  useLoaderData,
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 
 import Button from 'components/Button';
@@ -10,6 +17,7 @@ import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 import type { User } from 'types/user';
 
 function Users() {
+  const params = useParams();
   const data = useLoaderData() as { users: User[] };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -32,7 +40,7 @@ function Users() {
   return (
     <>
       <div className="flex items-start justify-between p-4 pb-0">
-        <h1 className="font-semibold">Users</h1>
+        <h2 className="font-semibold">Users</h2>
         <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen(null)}>
           <PlusIcon className="size-5" />
           <span>Add User</span>
@@ -50,34 +58,42 @@ function Users() {
           </thead>
 
           <tbody>
-            {data.users.map((user) => (
-              <tr key={user.id}>
-                <Table.Td>{user.name}</Table.Td>
+            {data.users.length ? (
+              data.users.map((user) => (
+                <tr key={user.id}>
+                  <Table.Td>{user.name}</Table.Td>
 
-                <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
-                  <Link
-                    to={`/users/${user.id}/scores`}
-                    className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                  >
-                    Scores
-                  </Link>
+                  <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                    <Link
+                      to={`/${params.programId}/users/${user.id}/scores`}
+                      className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                    >
+                      Scores
+                    </Link>
 
-                  <button
-                    className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                    onClick={() => saveModalRef.current?.onOpen(user)}
-                  >
-                    Edit
-                  </button>
+                    <button
+                      className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                      onClick={() => saveModalRef.current?.onOpen(user)}
+                    >
+                      Edit
+                    </button>
 
-                  <button
-                    className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                    onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
-                  >
-                    Delete
-                  </button>
+                    <button
+                      className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                      onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
+                    >
+                      Delete
+                    </button>
+                  </Table.Td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>
+                  No users available
                 </Table.Td>
               </tr>
-            ))}
+            )}
           </tbody>
         </Table>
       </div>
@@ -91,30 +107,32 @@ function Users() {
   );
 }
 
-Users.loader = async () => {
+Users.loader = async ({ params }: LoaderFunctionArgs) => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users`);
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users`);
     return { users: (await res.json()).nodes };
   } catch {
     return { users: [] };
   }
 };
 
-Users.action = async ({ request }: ActionFunctionArgs) => {
+Users.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _userId, ...body } = await request.json();
 
     let res;
     switch (type) {
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users/${_userId || ''}`, {
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         break;
       case 'DELETE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/users/${_userId || ''}`, { method: 'DELETE' });
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`, {
+          method: 'DELETE',
+        });
         break;
       default:
         return { success: false, error: null };
