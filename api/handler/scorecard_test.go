@@ -326,17 +326,18 @@ func Test_scorecard(t *testing.T) {
 
 	mock.MatchExpectationsInOrder(false)
 
+	scorecardID := 2
 	mock.ExpectQuery("SELECT .+ FROM scorecards").
-		WithArgs("1", 2).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "score", "is_outdated", "generated_at"}).AddRow(2, 1, 100, false, "2024-01-01 00:00:00"))
+		WithArgs("1", scorecardID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "score", "is_outdated", "generated_at"}).AddRow(scorecardID, 1, 100, false, "2024-01-01 00:00:00"))
 
 	mock.ExpectQuery("SELECT .+ FROM users WHERE id IN (?)").
 		WithArgs(1).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "User 1"))
 
 	mock.ExpectQuery("SELECT .+ FROM scorecard_items").
-		WithArgs(2).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "structure_id", "score"}).AddRow(1, 1, 100))
+		WithArgs(scorecardID).
+		WillReturnRows(sqlmock.NewRows([]string{"structure_id", "score"}).AddRow(1, 100))
 
 	app := fiber.New()
 	h.Register(app, middleware.New())
@@ -347,5 +348,5 @@ func Test_scorecard(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"scorecard":{"id":2,"user":{"id":1,"name":"User 1"},"score":100,"items":[{"id":1,"structureId":1,"score":100}],"isOutdated":false,"generatedAt":"2024-01-01T00:00:00Z"},"error":null}`, string(body))
+	assert.Equal(t, `{"scorecard":{"id":2,"user":{"id":1,"name":"User 1"},"score":100,"items":[{"structureId":1,"score":100}],"isOutdated":false,"generatedAt":"2024-01-01T00:00:00Z"},"error":null}`, string(body))
 }
