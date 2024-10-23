@@ -485,6 +485,7 @@ func (h *Handler) scorecard(c *fiber.Ctx) error {
 		for rows.Next() {
 			var node model.ScorecardItem
 			if err := rows.StructScan(&node); err != nil {
+				log.Error().Err(err).Msg("scorecard.scorecard")
 				continue
 			}
 			result.Scorecard.Items = append(result.Scorecard.Items, &node)

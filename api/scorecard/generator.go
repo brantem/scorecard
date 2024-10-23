@@ -79,6 +79,7 @@ func (g *Generator) generate(programID, userID, scorecardID int) error {
 		for rows.Next() {
 			var node ScorecardStructure
 			if err := rows.StructScan(&node); err != nil {
+				log.Error().Err(err).Msg("scorecard.Generator.generate")
 				continue
 			}
 			if node.ParentID == nil {
@@ -107,6 +108,7 @@ func (g *Generator) generate(programID, userID, scorecardID int) error {
 			var syllabusID int
 			var score float64
 			if err := rows.Scan(&syllabusID, &score); err != nil {
+				log.Error().Err(err).Msg("scorecard.Generator.generate")
 				continue
 			}
 			assignments[syllabusID] = score
