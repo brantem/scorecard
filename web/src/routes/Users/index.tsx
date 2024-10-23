@@ -63,34 +63,42 @@ function Users() {
 
           <tbody>
             {data.users.length ? (
-              data.users.map((user) => (
-                <tr key={user.id}>
-                  <Table.Td>{user.name}</Table.Td>
+              <>
+                {data.users.map((user) => (
+                  <tr key={user.id}>
+                    <Table.Td>{user.name}</Table.Td>
 
-                  <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
-                    <Link
-                      to={`/${params.programId}/users/${user.id}/scores`}
-                      className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                    >
-                      Scores
-                    </Link>
+                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                      <Link
+                        to={`/${params.programId}/users/${user.id}/scores`}
+                        className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                      >
+                        Scores
+                      </Link>
 
-                    <button
-                      className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                      onClick={() => saveModalRef.current?.open(user)}
-                    >
-                      Edit
-                    </button>
+                      <button
+                        className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                        onClick={() => saveModalRef.current?.open(user)}
+                      >
+                        Edit
+                      </button>
 
-                    <button
-                      className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                      onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: user.id })}
-                    >
-                      Delete
-                    </button>
-                  </Table.Td>
-                </tr>
-              ))
+                      <button
+                        className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                        onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: user.id })}
+                      >
+                        Delete
+                      </button>
+                    </Table.Td>
+                  </tr>
+                ))}
+
+                {[...new Array(10 - data.users.length)].map((_, i) => (
+                  <tr key={i}>
+                    <td className="h-12" colSpan={2} />
+                  </tr>
+                ))}
+              </>
             ) : (
               <tr>
                 <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>

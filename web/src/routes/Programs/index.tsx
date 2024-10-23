@@ -59,31 +59,41 @@ function Programs() {
 
             <tbody>
               {data.programs.length ? (
-                data.programs.map((node) => (
-                  <tr key={node.id}>
-                    <Table.Td>
-                      <Link to={`/${node.id}`} className="w-full hover:underline">
-                        {node.title}
-                      </Link>
-                    </Table.Td>
+                <>
+                  {data.programs.map((node) => (
+                    <tr key={node.id}>
+                      <Table.Td>
+                        <Link to={`/${node.id}`} className="w-full hover:underline">
+                          {node.title}
+                        </Link>
+                      </Table.Td>
 
-                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
-                      <button
-                        className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                        onClick={() => saveModalRef.current?.open(node)}
-                      >
-                        Edit
-                      </button>
+                      <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                        <button
+                          className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                          onClick={() => saveModalRef.current?.open(node)}
+                        >
+                          Edit
+                        </button>
 
-                      <button
-                        className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                        onClick={() => deleteModalRef.current?.open('Program', { type: 'DELETE', _programId: node.id })}
-                      >
-                        Delete
-                      </button>
-                    </Table.Td>
-                  </tr>
-                ))
+                        <button
+                          className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                          onClick={() =>
+                            deleteModalRef.current?.open('Program', { type: 'DELETE', _programId: node.id })
+                          }
+                        >
+                          Delete
+                        </button>
+                      </Table.Td>
+                    </tr>
+                  ))}
+
+                  {[...new Array(10 - data.programs.length)].map((_, i) => (
+                    <tr key={i}>
+                      <td className="h-12" colSpan={2} />
+                    </tr>
+                  ))}
+                </>
               ) : (
                 <tr>
                   <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>

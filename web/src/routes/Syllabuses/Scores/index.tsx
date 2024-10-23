@@ -80,6 +80,12 @@ function SyllabusScores() {
                 </Table.Td>
               </tr>
             ))}
+
+            {[...new Array(10 - data.scores.length)].map((_, i) => (
+              <tr key={i}>
+                <td className="h-12" colSpan={3} />
+              </tr>
+            ))}
           </tbody>
         </Table>
       </div>
