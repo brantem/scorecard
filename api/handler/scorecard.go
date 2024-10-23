@@ -399,6 +399,7 @@ func (h *Handler) scorecards(c *fiber.Ctx) error {
 		SELECT id, user_id, score, is_outdated, generated_at
 		FROM scorecards
 		WHERE program_id = ?
+		ORDER BY rowid ASC
 	`, c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("scorecard.scorecards")

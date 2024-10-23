@@ -159,6 +159,7 @@ func (h *Handler) userScores(c *fiber.Ctx) error {
 		JOIN syllabuses s ON s.structure_id = ss.id
 		LEFT JOIN user_scores us ON us.user_id = ? AND us.syllabus_id = s.id
 		WHERE ss.program_id = ?
+		ORDER BY s.created_at ASC
 	`, c.Params("userId"), c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("user.userScores")
