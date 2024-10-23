@@ -41,6 +41,7 @@ func main() {
 
 	db := db.New()
 	generator := scorecard.NewGenerator(db)
+	generator.Start()
 
 	app := fiber.New(fiber.Config{
 		AppName:               constant.AppID,
