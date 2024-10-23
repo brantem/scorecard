@@ -1,17 +1,33 @@
-import { Link, useLoaderData, type ActionFunctionArgs } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
+import { Link, useLoaderData, useFetcher, type ActionFunctionArgs } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 
 import Table from 'components/Table';
 import Button from 'components/Button';
 import SaveModal, { SaveModalHandle } from './SaveModal';
+import DeleteModal, { type DeleteModalHandle } from 'components/DeleteModal';
 
 import { Program } from 'types/program';
-import { useRef } from 'react';
 
 function Programs() {
   const data = useLoaderData() as { programs: Program[] };
+  const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
   const saveModalRef = useRef<SaveModalHandle>(null);
+  const deleteModalRef = useRef<DeleteModalHandle>(null);
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if (fetcher.data.success) {
+      switch ((fetcher.json as { type?: string }).type) {
+        case 'DELETE':
+          deleteModalRef.current?.close();
+          break;
+      }
+    } else {
+      alert(fetcher.data.error?.code || 'INTERNAL_SERVER_ERROR');
+    }
+  }, [fetcher.data]);
 
   return (
     <>
@@ -48,12 +64,19 @@ function Programs() {
                       </Link>
                     </Table.Td>
 
-                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
+                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
                       <button
                         className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
                         onClick={() => saveModalRef.current?.open(node)}
                       >
                         Edit
+                      </button>
+
+                      <button
+                        className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                        onClick={() => deleteModalRef.current?.open('Program', { type: 'DELETE', _programId: node.id })}
+                      >
+                        Delete
                       </button>
                     </Table.Td>
                   </tr>
@@ -71,6 +94,10 @@ function Programs() {
       </div>
 
       <SaveModal ref={saveModalRef} />
+      <DeleteModal
+        ref={deleteModalRef}
+        onAccept={(body) => fetcher.submit(body, { method: 'DELETE', encType: 'application/json' })}
+      />
     </>
   );
 }
@@ -95,6 +122,11 @@ Programs.action = async ({ request }: ActionFunctionArgs) => {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
+        });
+        break;
+      case 'DELETE':
+        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${_programId}`, {
+          method: 'DELETE',
         });
         break;
       default:
