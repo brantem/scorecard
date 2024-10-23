@@ -2,6 +2,7 @@ import { Fragment, useRef } from 'react';
 import {
   Link,
   useParams,
+  useSearchParams,
   useLoaderData,
   redirect,
   type LoaderFunctionArgs,
@@ -23,6 +24,7 @@ const LIMIT = 10;
 
 function SyllabusScores() {
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const data = useLoaderData() as { syllabus: Syllabus; scores: { totalCount: number; nodes: Score[] } };
 
   const saveModalRef = useRef<SaveModalHandle>(null);
@@ -54,42 +56,59 @@ function SyllabusScores() {
         </div>
       </div>
 
-      <div className="m-4 overflow-x-auto rounded-lg border border-neutral-200">
-        <Table>
-          <thead>
-            <tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Score</Table.Th>
-              <Table.Th className="w-24 [&>div]:justify-end">Actions</Table.Th>
-            </tr>
-          </thead>
+      <div className="p-4">
+        <Table.Provider
+          totalItems={data.scores.totalCount}
+          onStateChange={(state) => {
+            setSearchParams((prev) => {
+              prev.set('page', state.page.toString());
+              return prev;
+            });
+          }}
+          initialState={{ itemsPerPage: LIMIT, page: parseInt(searchParams.get('page') || '1') }}
+        >
+          <div className="overflow-x-auto rounded-lg border border-neutral-200">
+            <Table>
+              <thead>
+                <tr>
+                  <Table.Th>Name</Table.Th>
+                  <Table.Th>Score</Table.Th>
+                  <Table.Th className="w-24 [&>div]:justify-end">Actions</Table.Th>
+                </tr>
+              </thead>
 
-          <tbody>
-            {data.scores.nodes.map((node) => (
-              <tr key={node.user.id}>
-                <Table.Td>{node.user.name}</Table.Td>
-                <Table.Td className="tabular-nums">
-                  {typeof node.score === 'number' ? node.score : <span className="text-neutral-400">-</span>}
-                </Table.Td>
+              <tbody>
+                {data.scores.nodes.map((node) => (
+                  <tr key={node.user.id}>
+                    <Table.Td>{node.user.name}</Table.Td>
+                    <Table.Td className="tabular-nums">
+                      {typeof node.score === 'number' ? node.score : <span className="text-neutral-400">-</span>}
+                    </Table.Td>
 
-                <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
-                  <button
-                    className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                    onClick={() => saveModalRef.current?.open(data.syllabus, node.user, node.score)}
-                  >
-                    {typeof node.score === 'number' ? 'Edit' : 'Add'}
-                  </button>
-                </Table.Td>
-              </tr>
-            ))}
+                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
+                      <button
+                        className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                        onClick={() => saveModalRef.current?.open(data.syllabus, node.user, node.score)}
+                      >
+                        {typeof node.score === 'number' ? 'Edit' : 'Add'}
+                      </button>
+                    </Table.Td>
+                  </tr>
+                ))}
 
-            {[...new Array(LIMIT - data.scores.nodes.length)].map((_, i) => (
-              <tr key={i}>
-                <td className="h-12" colSpan={3} />
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+                {[...new Array(LIMIT - data.scores.nodes.length)].map((_, i) => (
+                  <tr key={i}>
+                    <td className="h-12" colSpan={3} />
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-end text-sm">
+            <Table.Pagination />
+          </div>
+        </Table.Provider>
       </div>
 
       <SaveModal

@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import {
   Link,
   useParams,
+  useSearchParams,
   useLoaderData,
   useFetcher,
   type LoaderFunctionArgs,
@@ -20,6 +21,7 @@ const LIMIT = 10;
 
 function Users() {
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const data = useLoaderData() as { users: { totalCount: number; nodes: User[] } };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -53,63 +55,80 @@ function Users() {
         </Button>
       </div>
 
-      <div className="m-4 overflow-x-auto rounded-lg border border-neutral-200">
-        <Table>
-          <thead>
-            <tr>
-              <Table.Th>Name</Table.Th>
+      <div className="p-4">
+        <Table.Provider
+          totalItems={data.users.totalCount}
+          onStateChange={(state) => {
+            setSearchParams((prev) => {
+              prev.set('page', state.page.toString());
+              return prev;
+            });
+          }}
+          initialState={{ itemsPerPage: LIMIT, page: parseInt(searchParams.get('page') || '1') }}
+        >
+          <div className="overflow-x-auto rounded-lg border border-neutral-200">
+            <Table>
+              <thead>
+                <tr>
+                  <Table.Th>Name</Table.Th>
 
-              <Table.Th className="w-32 [&>div]:justify-end">Actions</Table.Th>
-            </tr>
-          </thead>
+                  <Table.Th className="w-32 [&>div]:justify-end">Actions</Table.Th>
+                </tr>
+              </thead>
 
-          <tbody>
-            {data.users.nodes.length ? (
-              <>
-                {data.users.nodes.map((node) => (
-                  <tr key={node.id}>
-                    <Table.Td>{node.name}</Table.Td>
+              <tbody>
+                {data.users.nodes.length ? (
+                  <>
+                    {data.users.nodes.map((node) => (
+                      <tr key={node.id}>
+                        <Table.Td>{node.name}</Table.Td>
 
-                    <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
-                      <Link
-                        to={`/${params.programId}/users/${node.id}/scores`}
-                        className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                      >
-                        Scores
-                      </Link>
+                        <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                          <Link
+                            to={`/${params.programId}/users/${node.id}/scores`}
+                            className="mr-2 flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                          >
+                            Scores
+                          </Link>
 
-                      <button
-                        className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                        onClick={() => saveModalRef.current?.open(node)}
-                      >
-                        Edit
-                      </button>
+                          <button
+                            className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                            onClick={() => saveModalRef.current?.open(node)}
+                          >
+                            Edit
+                          </button>
 
-                      <button
-                        className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                        onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: node.id })}
-                      >
-                        Delete
-                      </button>
+                          <button
+                            className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                            onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: node.id })}
+                          >
+                            Delete
+                          </button>
+                        </Table.Td>
+                      </tr>
+                    ))}
+
+                    {[...new Array(LIMIT - data.users.nodes.length)].map((_, i) => (
+                      <tr key={i}>
+                        <td className="h-12" colSpan={2} />
+                      </tr>
+                    ))}
+                  </>
+                ) : (
+                  <tr>
+                    <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>
+                      No users available
                     </Table.Td>
                   </tr>
-                ))}
+                )}
+              </tbody>
+            </Table>
+          </div>
 
-                {[...new Array(LIMIT - data.users.nodes.length)].map((_, i) => (
-                  <tr key={i}>
-                    <td className="h-12" colSpan={2} />
-                  </tr>
-                ))}
-              </>
-            ) : (
-              <tr>
-                <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>
-                  No users available
-                </Table.Td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+          <div className="mt-4 flex items-center justify-end text-sm">
+            <Table.Pagination />
+          </div>
+        </Table.Provider>
       </div>
 
       <SaveModal ref={saveModalRef} />

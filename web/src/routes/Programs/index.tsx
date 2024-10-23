@@ -1,5 +1,12 @@
 import { useRef, useEffect } from 'react';
-import { Link, useLoaderData, useFetcher, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router-dom';
+import {
+  Link,
+  useSearchParams,
+  useLoaderData,
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/20/solid';
 
 import Table from 'components/Table';
@@ -12,6 +19,7 @@ import { Program } from 'types/program';
 const LIMIT = 10;
 
 function Programs() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const data = useLoaderData() as { programs: { totalCount: number; nodes: Program[] } };
   const fetcher = useFetcher<{ success: boolean; error: { code: string | null } | null }>();
 
@@ -37,8 +45,8 @@ function Programs() {
         <span className="inline-block rounded-full bg-neutral-900 px-3 py-1 text-white">Programs</span>
       </div>
 
-      <div className="mx-auto size-full max-w-[1920px] overflow-hidden border-neutral-200 bg-white min-[1920px]:border-x">
-        <div className="flex items-start justify-between p-4 pb-0">
+      <div className="mx-auto size-full max-w-[1920px] overflow-hidden border-neutral-200 bg-white p-4 min-[1920px]:border-x">
+        <div className="flex items-start justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">Programs</h2>
             <span className="inline-block text-sm text-neutral-500">{data.programs.totalCount} Programs</span>
@@ -50,62 +58,77 @@ function Programs() {
           </Button>
         </div>
 
-        <div className="m-4 overflow-x-auto rounded-lg border border-neutral-200">
-          <Table>
-            <thead>
-              <tr>
-                <Table.Th>Title</Table.Th>
-                <Table.Th className="w-24 [&>div]:justify-end">Actions</Table.Th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {data.programs.nodes.length ? (
-                <>
-                  {data.programs.nodes.map((node) => (
-                    <tr key={node.id}>
-                      <Table.Td>
-                        <Link to={`/${node.id}`} className="w-full hover:underline">
-                          {node.title}
-                        </Link>
-                      </Table.Td>
-
-                      <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
-                        <button
-                          className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                          onClick={() => saveModalRef.current?.open(node)}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                          onClick={() =>
-                            deleteModalRef.current?.open('Program', { type: 'DELETE', _programId: node.id })
-                          }
-                        >
-                          Delete
-                        </button>
-                      </Table.Td>
-                    </tr>
-                  ))}
-
-                  {[...new Array(LIMIT - data.programs.nodes.length)].map((_, i) => (
-                    <tr key={i}>
-                      <td className="h-12" colSpan={2} />
-                    </tr>
-                  ))}
-                </>
-              ) : (
+        <Table.Provider
+          totalItems={data.programs.totalCount}
+          onStateChange={(state) => {
+            setSearchParams((prev) => {
+              prev.set('page', state.page.toString());
+              return prev;
+            });
+          }}
+          initialState={{ itemsPerPage: LIMIT, page: parseInt(searchParams.get('page') || '1') }}
+        >
+          <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
+            <Table>
+              <thead>
                 <tr>
-                  <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>
-                    No programs available
-                  </Table.Td>
+                  <Table.Th>Title</Table.Th>
+                  <Table.Th className="w-24 [&>div]:justify-end">Actions</Table.Th>
                 </tr>
-              )}
-            </tbody>
-          </Table>
-        </div>
+              </thead>
+
+              <tbody>
+                {data.programs.nodes.length ? (
+                  <>
+                    {data.programs.nodes.map((node) => (
+                      <tr key={node.id}>
+                        <Table.Td>
+                          <Link to={`/${node.id}`} className="w-full hover:underline">
+                            {node.title}
+                          </Link>
+                        </Table.Td>
+
+                        <Table.Td className="text-sm [&>div]:justify-end [&>div]:gap-1.5 [&>div]:pr-1.5">
+                          <button
+                            className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
+                            onClick={() => saveModalRef.current?.open(node)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
+                            onClick={() =>
+                              deleteModalRef.current?.open('Program', { type: 'DELETE', _programId: node.id })
+                            }
+                          >
+                            Delete
+                          </button>
+                        </Table.Td>
+                      </tr>
+                    ))}
+
+                    {[...new Array(LIMIT - data.programs.nodes.length)].map((_, i) => (
+                      <tr key={i}>
+                        <td className="h-12" colSpan={2} />
+                      </tr>
+                    ))}
+                  </>
+                ) : (
+                  <tr>
+                    <Table.Td className="text-neutral-400 [&>div]:justify-center" colSpan={2}>
+                      No programs available
+                    </Table.Td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-end text-sm">
+            <Table.Pagination />
+          </div>
+        </Table.Provider>
       </div>
 
       <SaveModal ref={saveModalRef} />
