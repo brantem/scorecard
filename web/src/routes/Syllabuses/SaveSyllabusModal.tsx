@@ -21,7 +21,7 @@ type Data = {
 };
 
 export type SaveSyllabusModalHandle = {
-  onOpen(structure: Structure, parent: Syllabus | null, syllabus: Syllabus | null): void;
+  open(structure: Structure, parent: Syllabus | null, syllabus: Syllabus | null): void;
 };
 
 export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_, ref) {
@@ -35,7 +35,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
   });
 
   useImperativeHandle(ref, () => ({
-    onOpen(structure, parent, syllabus) {
+    open(structure, parent, syllabus) {
       setData({ structure, parent, syllabus });
       if (syllabus) setValue('title', syllabus.title);
     },

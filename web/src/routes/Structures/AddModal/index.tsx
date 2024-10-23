@@ -9,7 +9,7 @@ import Button from 'components/Button';
 import type { Structure } from 'types/scorecard';
 
 export type AddModalHandle = {
-  onOpen(parent: Structure | null): void;
+  open(parent: Structure | null): void;
 };
 
 export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
@@ -17,7 +17,7 @@ export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
   const [data, setData] = useState<{ parent: Structure | null } | null>(null);
 
   useImperativeHandle(ref, () => ({
-    onOpen(parent) {
+    open(parent) {
       setData({ parent });
     },
   }));

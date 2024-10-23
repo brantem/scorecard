@@ -4,8 +4,8 @@ import Modal from './Modal';
 import Button from './Button';
 
 export type ResetModalHandle = {
-  onOpen(title: string, values: Record<string, any>): void;
-  onClose(): void;
+  open(title: string, values: Record<string, any>): void;
+  close(): void;
 };
 
 type ResetModalProps = {
@@ -16,10 +16,10 @@ export default forwardRef<ResetModalHandle, ResetModalProps>(function ResetModal
   const [data, setData] = useState<{ title: string; values: Record<string, any> } | null>(null);
 
   useImperativeHandle(ref, () => ({
-    onOpen(title, values) {
+    open(title, values) {
       setData({ title, values });
     },
-    onClose() {
+    close() {
       setData(null);
     },
   }));

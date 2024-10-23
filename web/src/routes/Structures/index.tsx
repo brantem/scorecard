@@ -40,10 +40,10 @@ function Structures() {
     if (fetcher.data.success) {
       switch ((fetcher.json as { type?: string }).type) {
         case 'RESET':
-          resetModalRef.current?.onClose();
+          resetModalRef.current?.close();
           break;
         case 'DELETE':
-          deleteModalRef.current?.onClose();
+          deleteModalRef.current?.close();
           break;
       }
     } else {
@@ -60,7 +60,7 @@ function Structures() {
           {data.structures.length ? (
             <Button
               className="bg-red-50 pl-2.5 text-sm text-red-500 hover:bg-red-100"
-              onClick={() => resetModalRef.current?.onOpen('Structures', { type: 'RESET', _structureId: '0' })}
+              onClick={() => resetModalRef.current?.open('Structures', { type: 'RESET', _structureId: '0' })}
             >
               <TrashIcon className="size-4" />
               <span>Reset</span>
@@ -76,13 +76,13 @@ function Structures() {
                 renderOptions={(structure) => (
                   <>
                     <Tree.Item className="min-w-0 hover:bg-neutral-100" asChild>
-                      <button onClick={() => editModalRef.current?.onOpen(structure)}>Edit</button>
+                      <button onClick={() => editModalRef.current?.open(structure)}>Edit</button>
                     </Tree.Item>
 
                     <Tree.Item className="min-w-0 border-red-200 bg-red-50 text-red-500 hover:bg-red-100" asChild>
                       <button
                         onClick={() => {
-                          deleteModalRef.current?.onOpen('Structure', { type: 'DELETE', _structureId: structure.id });
+                          deleteModalRef.current?.open('Structure', { type: 'DELETE', _structureId: structure.id });
                         }}
                       >
                         Delete
@@ -100,7 +100,7 @@ function Structures() {
                       )}
                       asChild
                     >
-                      <button onClick={() => addModalRef.current?.onOpen(parent)}>
+                      <button onClick={() => addModalRef.current?.open(parent)}>
                         <PlusIcon className="size-5" />
                         <span>Add Structure</span>
                       </button>
@@ -114,7 +114,7 @@ function Structures() {
               <span>Start building the structures for the Scorecard</span>
 
               <div className="flex items-center gap-2">
-                <Button className="text-sm" onClick={() => addModalRef.current?.onOpen(null)}>
+                <Button className="text-sm" onClick={() => addModalRef.current?.open(null)}>
                   Manual
                 </Button>
                 <span>Or</span>

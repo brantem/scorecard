@@ -6,14 +6,14 @@ import SaveForm from './SaveForm';
 import type { Structure } from 'types/scorecard';
 
 export type EditModalHandle = {
-  onOpen(structure: Structure): void;
+  open(structure: Structure): void;
 };
 
 export default forwardRef<EditModalHandle>(function EditModal(_, ref) {
   const [data, setData] = useState<{ structure: Structure | null } | null>(null);
 
   useImperativeHandle(ref, () => ({
-    onOpen(structure) {
+    open(structure) {
       setData({ structure });
     },
   }));

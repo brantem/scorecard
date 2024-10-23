@@ -15,7 +15,7 @@ const schema = v.object({
 });
 
 export type SaveStructureModalHandle = {
-  onOpen(prev: Structure | null, structure: Structure | null): void;
+  open(prev: Structure | null, structure: Structure | null): void;
 };
 
 type Data = {
@@ -34,7 +34,7 @@ export default forwardRef<SaveStructureModalHandle>(function SaveStructureModal(
   });
 
   useImperativeHandle(ref, () => ({
-    onOpen(prev, structure) {
+    open(prev, structure) {
       setData({ prev, structure });
       if (structure) setValue('title', structure.title);
     },

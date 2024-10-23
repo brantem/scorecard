@@ -38,11 +38,11 @@ function Syllabuses() {
       switch ((fetcher.json as { type?: string }).type) {
         case 'RESET_STRUCTURE':
         case 'RESET_SYLLABUS':
-          resetModalRef.current?.onClose();
+          resetModalRef.current?.close();
           break;
         case 'DELETE_STRUCTURE':
         case 'DELETE_SYLLABUS':
-          deleteModalRef.current?.onClose();
+          deleteModalRef.current?.close();
           break;
       }
     } else {
@@ -80,7 +80,7 @@ function Syllabuses() {
               <Button
                 className="bg-red-50 px-3 py-1.5 pl-2 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
-                  resetModalRef.current?.onOpen('Structures', { type: 'RESET_STRUCTURE', _structureId: '0' });
+                  resetModalRef.current?.open('Structures', { type: 'RESET_STRUCTURE', _structureId: '0' });
                 }}
               >
                 <TrashIcon className="size-4" />
@@ -99,7 +99,7 @@ function Syllabuses() {
                       <button
                         className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm hover:bg-neutral-100"
                         onClick={() => {
-                          saveStructureModalRef.current?.onOpen(i > 0 ? data.structures[i - 1] : null, structure);
+                          saveStructureModalRef.current?.open(i > 0 ? data.structures[i - 1] : null, structure);
                         }}
                       >
                         Edit
@@ -114,7 +114,7 @@ function Syllabuses() {
                       <button
                         className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm text-red-500 hover:bg-red-100"
                         onClick={() => {
-                          deleteModalRef.current?.onOpen('Structure', {
+                          deleteModalRef.current?.open('Structure', {
                             type: 'DELETE_STRUCTURE',
                             _structureId: data.structures.length === 2 ? '0' : structure.id, // Reset if there is only 2 structures
                           });
@@ -133,7 +133,7 @@ function Syllabuses() {
                   'relative z-10 flex items-center justify-center rounded-full bg-neutral-900 text-white hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-400',
                   data.structures.length ? 'size-10' : 'h-10 gap-2 px-3',
                 )}
-                onClick={() => saveStructureModalRef.current?.onOpen(lastStructure, null)}
+                onClick={() => saveStructureModalRef.current?.open(lastStructure, null)}
                 disabled={isStructuresLocked}
               >
                 <PlusIcon className="size-5" />
@@ -169,7 +169,7 @@ function Syllabuses() {
               <Button
                 className="bg-red-50 pl-2.5 text-sm text-red-500 hover:bg-red-100"
                 onClick={() => {
-                  resetModalRef.current?.onOpen('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: '0' });
+                  resetModalRef.current?.open('Syllabuses', { type: 'RESET_SYLLABUS', _syllabusId: '0' });
                 }}
               >
                 <TrashIcon className="size-4" />
@@ -188,7 +188,7 @@ function Syllabuses() {
                       <Tree.Item className="min-w-0 hover:bg-neutral-100" asChild>
                         <button
                           onClick={() => {
-                            saveSyllabusModalRef.current?.onOpen(structures.get(syllabus.structureId)!, null, syllabus);
+                            saveSyllabusModalRef.current?.open(structures.get(syllabus.structureId)!, null, syllabus);
                           }}
                         >
                           Edit
@@ -198,7 +198,7 @@ function Syllabuses() {
                       <Tree.Item className="min-w-0 border-red-200 bg-red-50 text-red-500 hover:bg-red-100" asChild>
                         <button
                           onClick={() => {
-                            deleteModalRef.current?.onOpen('Syllabus', {
+                            deleteModalRef.current?.open('Syllabus', {
                               type: 'DELETE_SYLLABUS',
                               _syllabusId: syllabus.id,
                             });
@@ -229,7 +229,7 @@ function Syllabuses() {
                         )}
                         asChild
                       >
-                        <button onClick={() => saveSyllabusModalRef.current?.onOpen(structure, parent, null)}>
+                        <button onClick={() => saveSyllabusModalRef.current?.open(structure, parent, null)}>
                           <PlusIcon className="size-5" />
                           <span>Add {structure.title}</span>
                         </button>
@@ -242,7 +242,7 @@ function Syllabuses() {
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <Button
                   className="pl-2.5 text-sm"
-                  onClick={() => saveSyllabusModalRef.current?.onOpen(prevStructures.get(null)!, null, null)}
+                  onClick={() => saveSyllabusModalRef.current?.open(prevStructures.get(null)!, null, null)}
                 >
                   <PlusIcon className="size-5" />
                   <span>Add {prevStructures.get(null)!.title}</span>

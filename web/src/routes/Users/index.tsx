@@ -29,7 +29,7 @@ function Users() {
     if (fetcher.data.success) {
       switch ((fetcher.json as { type?: string }).type) {
         case 'DELETE':
-          deleteModalRef.current?.onClose();
+          deleteModalRef.current?.close();
           break;
       }
     } else {
@@ -41,7 +41,7 @@ function Users() {
     <>
       <div className="flex items-start justify-between p-4 pb-0">
         <h2 className="font-semibold">Users</h2>
-        <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen(null)}>
+        <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
           <PlusIcon className="size-5" />
           <span>Add User</span>
         </Button>
@@ -73,14 +73,14 @@ function Users() {
 
                     <button
                       className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                      onClick={() => saveModalRef.current?.onOpen(user)}
+                      onClick={() => saveModalRef.current?.open(user)}
                     >
                       Edit
                     </button>
 
                     <button
                       className="flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-500 hover:bg-red-100"
-                      onClick={() => deleteModalRef.current?.onOpen('User', { type: 'DELETE', _userId: user.id })}
+                      onClick={() => deleteModalRef.current?.open('User', { type: 'DELETE', _userId: user.id })}
                     >
                       Delete
                     </button>

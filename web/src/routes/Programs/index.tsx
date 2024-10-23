@@ -23,7 +23,7 @@ function Programs() {
         <div className="flex min-h-[52px] items-start justify-between p-4 pb-0">
           <h2 className="font-semibold">Programs</h2>
 
-          <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.onOpen(null)}>
+          <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
             <PlusIcon className="size-5" />
             <span>Add Program</span>
           </Button>
@@ -51,7 +51,7 @@ function Programs() {
                     <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
                       <button
                         className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                        onClick={() => saveModalRef.current?.onOpen(node)}
+                        onClick={() => saveModalRef.current?.open(node)}
                       >
                         Edit
                       </button>

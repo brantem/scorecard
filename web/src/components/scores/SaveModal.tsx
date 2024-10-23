@@ -16,7 +16,7 @@ const schema = v.object({
 });
 
 export type SaveModalHandle = {
-  onOpen(syllabus: BaseSyllabus, user: User, score: number | null): void;
+  open(syllabus: BaseSyllabus, user: User, score: number | null): void;
 };
 
 type Data = {
@@ -40,7 +40,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
   });
 
   useImperativeHandle(ref, () => ({
-    onOpen(syllabus, user, score) {
+    open(syllabus, user, score) {
       const isEditing = typeof score === 'number';
       setData({ syllabus, user, isEditing });
       if (isEditing) setValue('score', score || 0);

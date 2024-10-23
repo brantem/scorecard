@@ -68,7 +68,7 @@ function UserScores() {
                         <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">
                           <button
                             className="flex h-8 items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 hover:bg-neutral-100"
-                            onClick={() => saveModalRef.current?.onOpen(node.syllabus, data.user, node.score)}
+                            onClick={() => saveModalRef.current?.open(node.syllabus, data.user, node.score)}
                           >
                             {typeof node.score === 'number' ? 'Edit' : 'Add'}
                           </button>

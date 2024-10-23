@@ -15,7 +15,7 @@ const schema = v.object({
 });
 
 export type SaveModalHandle = {
-  onOpen(program: Program | null): void;
+  open(program: Program | null): void;
 };
 
 export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
@@ -29,7 +29,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
   });
 
   useImperativeHandle(ref, () => ({
-    onOpen(program) {
+    open(program) {
       setData({ program });
       if (program) setValue('title', program.title);
     },
