@@ -141,19 +141,19 @@ Programs.action = async ({ request }: ActionFunctionArgs) => {
   try {
     const { type, _programId, ...body } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${_programId || ''}`, {
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${_programId || ''}`;
+        res = await fetch(url, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         break;
       case 'DELETE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${_programId}`, {
-          method: 'DELETE',
-        });
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${_programId}`;
+        res = await fetch(url, { method: 'DELETE' });
         break;
       default:
         return { success: false, error: null };

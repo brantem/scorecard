@@ -131,9 +131,8 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
   const [structures, scorecard] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`;
+        const res = await fetch(url);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -141,9 +140,8 @@ Scorecard.loader = async ({ params }: LoaderFunctionArgs) => {
     })(),
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/${params.scorecardId}`,
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/${params.scorecardId}`;
+        const res = await fetch(url);
         return (await res.json()).scorecard || null;
       } catch {
         return null;
@@ -158,16 +156,13 @@ Scorecard.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
-      case 'GENERATE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate/${params.scorecardId}`,
-          {
-            method: 'POST',
-          },
-        );
+      case 'GENERATE': {
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate/${params.scorecardId}`;
+        res = await fetch(url, { method: 'POST' });
         break;
+      }
       default:
         return { success: false, error: null };
     }

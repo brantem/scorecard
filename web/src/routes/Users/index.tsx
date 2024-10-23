@@ -146,19 +146,19 @@ Users.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _userId, ...body } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'SAVE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`, {
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`;
+        res = await fetch(url, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         break;
       case 'DELETE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`, {
-          method: 'DELETE',
-        });
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/users/${_userId || ''}`;
+        res = await fetch(url, { method: 'DELETE' });
         break;
       default:
         return { success: false, error: null };

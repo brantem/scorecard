@@ -137,17 +137,15 @@ SyllabusScores.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _userId, ...body } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'SAVE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId}/scores/${_userId}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId}/scores/${_userId}`;
+        res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       default:
         return { success: false, error: null };

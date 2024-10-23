@@ -160,9 +160,8 @@ Structures.loader = async ({ params }: LoaderFunctionArgs) => {
   const [canCreate, structures] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses`, {
-          method: 'HEAD',
-        });
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses`;
+        const res = await fetch(url, { method: 'HEAD' });
         return parseInt(res.headers.get('X-Total-Count') || '0') > 0;
       } catch {
         return false;
@@ -170,9 +169,8 @@ Structures.loader = async ({ params }: LoaderFunctionArgs) => {
     })(),
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`;
+        const res = await fetch(url);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -186,36 +184,28 @@ Structures.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _syllabusId, _structureId, ...body } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'COPY':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/copy/${_syllabusId}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/copy/${_syllabusId}`;
+        res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       case 'SAVE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`;
+        res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       case 'RESET':
       case 'DELETE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`,
-          {
-            method: 'DELETE',
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures/${_structureId || ''}`;
+        res = await fetch(url, { method: 'DELETE' });
         break;
       default:
         return { success: false, error: null };

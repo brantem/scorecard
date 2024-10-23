@@ -82,12 +82,8 @@ Scorecards.loader = async ({ params }: LoaderFunctionArgs) => {
   const [canGenerate, scorecards] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`,
-          {
-            method: 'HEAD',
-          },
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/structures`;
+        const res = await fetch(url, { method: 'HEAD' });
         return parseInt(res.headers.get('X-Total-Count') || '0') > 0;
       } catch {
         return false;
@@ -109,12 +105,11 @@ Scorecards.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'GENERATE':
-        res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate`, {
-          method: 'POST',
-        });
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards/generate`;
+        res = await fetch(url, { method: 'POST' });
         break;
       default:
         return { success: false, error: null };

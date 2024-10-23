@@ -281,9 +281,8 @@ Syllabuses.loader = async ({ params }: LoaderFunctionArgs) => {
   const [structures, syllabuses] = await Promise.all([
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures`,
-        );
+        const url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures`;
+        const res = await fetch(url);
         return (await res.json()).nodes;
       } catch {
         return [];
@@ -305,47 +304,34 @@ Syllabuses.action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     const { type, _structureId, _syllabusId, ...body } = await request.json();
 
-    let res;
+    let url, res;
     switch (type) {
       case 'SAVE_STRUCTURE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`;
+        res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       case 'RESET_STRUCTURE':
       case 'DELETE_STRUCTURE':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`,
-          {
-            method: 'DELETE',
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/structures/${_structureId || ''}`;
+        res = await fetch(url, { method: 'DELETE' });
         break;
       case 'SAVE_SYLLABUS':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`;
+        res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         break;
       case 'RESET_SYLLABUS':
       case 'DELETE_SYLLABUS':
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`,
-          {
-            method: 'DELETE',
-          },
-        );
+        url = `${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/syllabuses/${_syllabusId || ''}`;
+        res = await fetch(url, { method: 'DELETE' });
         break;
-
       default:
         return { success: false, error: null };
     }
