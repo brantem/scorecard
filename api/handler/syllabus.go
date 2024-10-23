@@ -20,7 +20,7 @@ func (h *Handler) syllabusStructures(c *fiber.Ctx) error {
 
 	programID, _ := c.ParamsInt("programId")
 
-	rows, err := h.db.QueryxContext(c.Context(), `
+	rows, err := h.db.QueryxContext(c.UserContext(), `
 		WITH RECURSIVE t AS (
 		  SELECT *
 		  FROM syllabus_structures
@@ -80,21 +80,25 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 
 	if structureID, _ := c.ParamsInt("structureId"); structureID != 0 {
 		// TODO: Update prev_id
-		_, err := h.db.ExecContext(c.Context(), `
+		_, err := h.db.ExecContext(c.UserContext(), `
 			UPDATE syllabus_structures
 			SET title = ?
 			WHERE id = ?
 		`, body.Title, structureID)
 		if err != nil {
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("syllabus.saveSyllabusStructure")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		tx := h.db.MustBeginTx(c.Context(), nil)
+		tx := h.db.MustBeginTx(c.UserContext(), nil)
 
 		if body.PrevID == nil {
-			_, err := tx.ExecContext(c.Context(), `
+			_, err := tx.ExecContext(c.UserContext(), `
 				INSERT INTO syllabus_structures (program_id, prev_id, title)
 				VALUES (?, -1, 'Assignment')
 				ON CONFLICT (program_id, title) DO NOTHING
@@ -107,7 +111,7 @@ func (h *Handler) saveSyllabusStructure(c *fiber.Ctx) error {
 			}
 		}
 
-		_, err := tx.ExecContext(c.Context(), `
+		_, err := tx.ExecContext(c.UserContext(), `
 			INSERT INTO syllabus_structures (program_id, prev_id, title)
 			VALUES (?, ?, ?)
 		`, programID, body.PrevID, body.Title)
@@ -135,15 +139,13 @@ func (h *Handler) deleteSyllabusStructure(c *fiber.Ctx) error {
 		Error   any  `json:"error"`
 	}
 
+	programID, _ := c.ParamsInt("programId")
 	structureID, _ := c.ParamsInt("structureId", -1)
-	if structureID < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(result)
-	}
 
-	tx := h.db.MustBeginTx(c.Context(), nil)
+	tx := h.db.MustBeginTx(c.UserContext(), nil)
 
 	// If structureID == 0, all syllabus structures will be deleted
-	_, err := tx.ExecContext(c.Context(), `
+	_, err := tx.ExecContext(c.UserContext(), `
 		DELETE FROM syllabus_structures
 		WHERE (? = 0 OR id = ?)
 	`, structureID, structureID)
@@ -155,7 +157,15 @@ func (h *Handler) deleteSyllabusStructure(c *fiber.Ctx) error {
 	}
 
 	if structureID == 0 {
-		_, err = tx.ExecContext(c.Context(), `DELETE FROM scorecards WHERE program_id = ?`, c.Params("programId"))
+		_, err = tx.ExecContext(c.UserContext(), `DELETE FROM scorecard_structures WHERE program_id = ?`, programID)
+		if err != nil {
+			tx.Rollback()
+			log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+
+		_, err = tx.ExecContext(c.UserContext(), `DELETE FROM scorecards WHERE program_id = ?`, programID)
 		if err != nil {
 			tx.Rollback()
 			log.Error().Err(err).Msg("syllabus.deleteSyllabusStructure")
@@ -177,7 +187,7 @@ func (h *Handler) syllabuses(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.Syllabus{}
 
-	rows, err := h.db.QueryxContext(c.Context(), `
+	rows, err := h.db.QueryxContext(c.UserContext(), `
 		SELECT s.id, s.parent_id, s.structure_id, s.title
 		FROM syllabuses s
 		JOIN syllabus_structures ss ON ss.id = s.structure_id
@@ -218,13 +228,13 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 
 	syllabusID, _ := c.ParamsInt("syllabusId")
 
-	rows, err := h.db.QueryxContext(c.Context(), `
+	rows, err := h.db.QueryxContext(c.UserContext(), `
 		WITH RECURSIVE t AS (
 		  SELECT s.*
-		  FROM syllabus_structures ss
-		  JOIN syllabuses s ON s.structure_id = ss.id
-		  WHERE ss.program_id = ?
-		    AND s.id = ?
+		  FROM syllabuses s
+		  JOIN syllabus_structures ss ON ss.id = s.structure_id
+		  WHERE s.id = ?
+		    AND ss.program_id = ?
 		  UNION ALL
 		  SELECT s.*
 		  FROM syllabuses s
@@ -233,7 +243,7 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 		SELECT t.id, t.title, COALESCE(ss.prev_id, 0) = -1 AS is_assignment
 		FROM t
 		JOIN syllabus_structures ss ON ss.id = t.structure_id
-	`, c.Params("programId"), syllabusID)
+	`, syllabusID, c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabus")
 		result.Error = constant.RespInternalServerError
@@ -255,7 +265,10 @@ func (h *Handler) syllabus(c *fiber.Ctx) error {
 			result.Syllabus.Parents = append(result.Syllabus.Parents, &node.BaseSyllabus)
 		}
 	}
-	slices.Reverse(result.Syllabus.Parents)
+
+	if len(result.Syllabus.Parents) > 1 {
+		slices.Reverse(result.Syllabus.Parents)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
 }
@@ -278,22 +291,30 @@ func (h *Handler) saveSyllabus(c *fiber.Ctx) error {
 	}
 
 	if syllabusID, _ := c.ParamsInt("syllabusID"); syllabusID != 0 {
-		_, err := h.db.ExecContext(c.Context(), `
+		_, err := h.db.ExecContext(c.UserContext(), `
 			UPDATE syllabuses
 			SET parent_id = ?, title = ?
 			WHERE id = ?
 		`, body.ParentID, body.Title, syllabusID)
 		if err != nil {
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("syllabus.saveSyllabus")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err := h.db.ExecContext(c.Context(), `
+		_, err := h.db.ExecContext(c.UserContext(), `
 			INSERT INTO syllabuses (parent_id, structure_id, title)
 			VALUES (?, ?, ?)
 		`, body.ParentID, body.StructureID, body.Title)
 		if err != nil {
+			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
+				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
+				return c.Status(fiber.StatusConflict).JSON(result)
+			}
 			log.Error().Err(err).Msg("syllabus.saveSyllabus")
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
@@ -311,16 +332,12 @@ func (h *Handler) deleteSyllabus(c *fiber.Ctx) error {
 	}
 
 	programID, _ := c.ParamsInt("programId")
+	syllabusID, _ := c.ParamsInt("syllabusId")
 
-	syllabusID, _ := c.ParamsInt("syllabusId", -1)
-	if syllabusID < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(result)
-	}
-
-	tx := h.db.MustBeginTx(c.Context(), nil)
+	tx := h.db.MustBeginTx(c.UserContext(), nil)
 
 	// If structureID == 0, all syllabuses will be deleted
-	_, err := tx.ExecContext(c.Context(), `
+	_, err := tx.ExecContext(c.UserContext(), `
 		DELETE FROM syllabuses
 		WHERE (? = 0 OR id = ?)
 	`, syllabusID, syllabusID)
@@ -332,7 +349,15 @@ func (h *Handler) deleteSyllabus(c *fiber.Ctx) error {
 	}
 
 	if syllabusID == 0 {
-		_, err = tx.ExecContext(c.Context(), `DELETE FROM scorecards WHERE program_id = ?`, programID)
+		_, err = tx.ExecContext(c.UserContext(), `DELETE FROM scorecard_structures WHERE program_id = ?`, programID)
+		if err != nil {
+			tx.Rollback()
+			log.Error().Err(err).Msg("syllabus.deleteSyllabus")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+
+		_, err = tx.ExecContext(c.UserContext(), `DELETE FROM scorecards WHERE program_id = ?`, programID)
 		if err != nil {
 			tx.Rollback()
 			log.Error().Err(err).Msg("syllabus.deleteSyllabus")
@@ -340,7 +365,7 @@ func (h *Handler) deleteSyllabus(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err = tx.ExecContext(c.Context(), `
+		_, err = tx.ExecContext(c.UserContext(), `
 			UPDATE scorecards
 			SET is_outdated = TRUE
 			WHERE program_id = ?
@@ -380,7 +405,7 @@ func (h *Handler) syllabusScores(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*Node{}
 
-	rows, err := h.db.QueryxContext(c.Context(), `
+	rows, err := h.db.QueryxContext(c.UserContext(), `
 		SELECT u.id AS user_id, us.score
 		FROM users u
 		LEFT JOIN user_scores us ON us.user_id = u.id
@@ -406,7 +431,7 @@ func (h *Handler) syllabusScores(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	if users, err := h.getUsers(c.Context(), userIds); err == nil {
+	if users, err := h.getUsers(c.UserContext(), userIds); err == nil {
 		for _, node := range result.Nodes {
 			node.User = users[node.UserID]
 		}
@@ -432,9 +457,9 @@ func (h *Handler) saveScore(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	tx := h.db.MustBeginTx(c.Context(), nil)
+	tx := h.db.MustBeginTx(c.UserContext(), nil)
 
-	_, err := tx.ExecContext(c.Context(), `
+	_, err := tx.ExecContext(c.UserContext(), `
 		INSERT INTO user_scores (user_id, syllabus_id, score)
 		VALUES (?, ?, ?)
 		ON CONFLICT (user_id, syllabus_id)
@@ -447,7 +472,7 @@ func (h *Handler) saveScore(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
-	_, err = tx.ExecContext(c.Context(), `UPDATE scorecards SET is_outdated = TRUE WHERE user_id = ?`, userID)
+	_, err = tx.ExecContext(c.UserContext(), `UPDATE scorecards SET is_outdated = TRUE WHERE user_id = ?`, userID)
 	if err != nil {
 		tx.Rollback()
 		log.Error().Err(err).Msg("syllabus.saveScore")

@@ -12,14 +12,18 @@ func (m *Middleware) SyllabusStructure(c *fiber.Ctx) error {
 	}
 
 	structureID, _ := c.ParamsInt("structureId")
-	if structureID < 1 {
+	switch {
+	case structureID < 0:
+		result.Error = constant.RespNotFound
+		return c.Status(fiber.StatusNotFound).JSON(result)
+	case structureID == 0:
 		return c.Next()
 	}
 
 	// In a real production app, this should be cached
 
 	var isExists bool
-	err := m.db.QueryRowContext(c.Context(), `SELECT EXISTS (
+	err := m.db.QueryRowContext(c.UserContext(), `SELECT EXISTS (
 	  SELECT id
 	  FROM syllabus_structures
 	  WHERE id = ?
@@ -45,14 +49,18 @@ func (m *Middleware) Syllabus(c *fiber.Ctx) error {
 	}
 
 	syllabusID, _ := c.ParamsInt("syllabusId")
-	if syllabusID < 1 {
+	switch {
+	case syllabusID < 0:
+		result.Error = constant.RespNotFound
+		return c.Status(fiber.StatusNotFound).JSON(result)
+	case syllabusID == 0:
 		return c.Next()
 	}
 
 	// In a real production app, this should be cached
 
 	var isExists bool
-	err := m.db.QueryRowContext(c.Context(), `SELECT EXISTS (
+	err := m.db.QueryRowContext(c.UserContext(), `SELECT EXISTS (
 	  SELECT s.id
 	  FROM syllabuses s
 	  JOIN syllabus_structures ss ON ss.id = s.structure_id

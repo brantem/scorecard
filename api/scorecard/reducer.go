@@ -1,7 +1,5 @@
 package scorecard
 
-import "github.com/rs/zerolog/log"
-
 type Node struct {
 	ID       int
 	ParentID *int `db:"parent_id"`
@@ -34,8 +32,6 @@ func (r *Reducer) SetNodes(nodes []*Node) {
 			}
 		}
 	}
-
-	log.Debug().Any("m", r.m).Send()
 }
 
 func (r *Reducer) Reduce() {

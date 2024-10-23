@@ -17,7 +17,7 @@ func (h *Handler) programs(c *fiber.Ctx) error {
 	}
 	result.Nodes = []*model.Program{}
 
-	rows, err := h.db.QueryxContext(c.Context(), `SELECT id, title FROM programs`)
+	rows, err := h.db.QueryxContext(c.UserContext(), `SELECT id, title FROM programs`)
 	if err != nil {
 		log.Error().Err(err).Msg("program.programs")
 		result.Error = constant.RespInternalServerError
@@ -46,7 +46,7 @@ func (h *Handler) program(c *fiber.Ctx) error {
 	}
 
 	var program model.Program
-	err := h.db.QueryRowxContext(c.Context(), `
+	err := h.db.QueryRowxContext(c.UserContext(), `
 		SELECT id, title
 		FROM programs
 		WHERE id = ?
@@ -77,7 +77,7 @@ func (h *Handler) saveProgram(c *fiber.Ctx) error {
 	}
 
 	if programID, _ := c.ParamsInt("programId"); programID != 0 {
-		_, err := h.db.ExecContext(c.Context(), `UPDATE programs SET title = ? WHERE id = ?`, body.Title, programID)
+		_, err := h.db.ExecContext(c.UserContext(), `UPDATE programs SET title = ? WHERE id = ?`, body.Title, programID)
 		if err != nil {
 			if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
 				result.Error = fiber.Map{"code": "TITLE_SHOULD_BE_UNIQUE"}
@@ -88,7 +88,7 @@ func (h *Handler) saveProgram(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
 	} else {
-		_, err := h.db.ExecContext(c.Context(), `
+		_, err := h.db.ExecContext(c.UserContext(), `
 			INSERT INTO programs (title)
 			VALUES (?)
 		`, body.Title)
@@ -101,6 +101,22 @@ func (h *Handler) saveProgram(c *fiber.Ctx) error {
 			result.Error = constant.RespInternalServerError
 			return c.Status(fiber.StatusInternalServerError).JSON(result)
 		}
+	}
+
+	result.Success = true
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) deleteProgram(c *fiber.Ctx) error {
+	var result struct {
+		Success bool `json:"success"`
+		Error   any  `json:"error"`
+	}
+
+	if _, err := h.db.ExecContext(c.UserContext(), `DELETE FROM programs WHERE id = ?`, c.Params("programId")); err != nil {
+		log.Error().Err(err).Msg("program.deleteProgram")
+		result.Error = constant.RespInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
 
 	result.Success = true

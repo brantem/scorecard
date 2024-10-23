@@ -26,6 +26,7 @@ func (h *Handler) Register(r *fiber.App, m middleware.MiddlewareInterface) {
 
 	programID := programs.Group("/:programId<int>", m.Program)
 	programID.Get("/", h.program)
+	programID.Delete("/", h.deleteProgram)
 
 	users := programID.Group("/users")
 	{

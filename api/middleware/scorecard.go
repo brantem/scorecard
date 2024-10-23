@@ -12,14 +12,18 @@ func (m *Middleware) ScorecardStructure(c *fiber.Ctx) error {
 	}
 
 	structureID, _ := c.ParamsInt("structureId")
-	if structureID < 1 {
+	switch {
+	case structureID < 0:
+		result.Error = constant.RespNotFound
+		return c.Status(fiber.StatusNotFound).JSON(result)
+	case structureID == 0:
 		return c.Next()
 	}
 
 	// In a real production app, this should be cached
 
 	var isExists bool
-	err := m.db.QueryRowContext(c.Context(), `SELECT EXISTS (
+	err := m.db.QueryRowContext(c.UserContext(), `SELECT EXISTS (
 	  SELECT id
 	  FROM scorecard_structures
 	  WHERE id = ?
