@@ -24,7 +24,6 @@ export type Scorecard = {
 };
 
 export type ScorecardItem = {
-  id: number;
   structureId: number;
   score: number;
 };

@@ -471,7 +471,7 @@ func (h *Handler) scorecard(c *fiber.Ctx) error {
 		defer wg.Done()
 
 		rows, err := h.db.QueryxContext(c.UserContext(), `
-			SELECT id, structure_id, score
+			SELECT structure_id, score
 			FROM scorecard_items
 			WHERE scorecard_id = ?
 		`, result.Scorecard.ID)

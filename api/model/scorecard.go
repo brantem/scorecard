@@ -24,7 +24,6 @@ type Scorecard struct {
 }
 
 type ScorecardItem struct {
-	ID          int     `json:"id"`
 	StructureID int     `json:"structureId" db:"structure_id"`
 	Score       float64 `json:"score"`
 }
