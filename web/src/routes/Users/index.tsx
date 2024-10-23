@@ -40,7 +40,11 @@ function Users() {
   return (
     <>
       <div className="flex items-start justify-between p-4 pb-0">
-        <h2 className="font-semibold">Users</h2>
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Users</h2>
+          <span className="inline-block text-sm text-neutral-500">{data.users.length} Users</span>
+        </div>
+
         <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
           <PlusIcon className="size-5" />
           <span>Add User</span>

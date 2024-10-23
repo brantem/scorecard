@@ -73,8 +73,11 @@ function Syllabuses() {
     <>
       <div className="grid size-full grid-cols-1 items-center justify-center overflow-hidden max-lg:grid-rows-3 max-lg:divide-y lg:grid-cols-4 lg:divide-x">
         <div className="relative flex size-full items-center justify-center p-4">
-          <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0 font-semibold">
-            <h2>Structures</h2>
+          <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold">Structures</h2>
+              <span className="inline-block text-sm text-neutral-500">{data.structures.length} Structures</span>
+            </div>
 
             {data.structures.length && !isStructuresLocked ? (
               <Button
@@ -162,8 +165,11 @@ function Syllabuses() {
         </div>
 
         <div className="relative size-full overflow-hidden max-lg:row-span-2 lg:col-span-3">
-          <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0 font-semibold">
-            <h2>Syllabuses</h2>
+          <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold">Syllabuses</h2>
+              <span className="inline-block text-sm text-neutral-500">{data.syllabuses.length} Syllabuses</span>
+            </div>
 
             {data.syllabuses.length ? (
               <Button

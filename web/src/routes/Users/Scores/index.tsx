@@ -7,6 +7,7 @@ import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
 } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { ChevronRightIcon } from '@heroicons/react/16/solid';
 
 import Table from 'components/Table';
@@ -29,8 +30,18 @@ function UserScores() {
 
   return (
     <>
-      <div className="flex min-h-[52px] items-start justify-between p-4 pb-0">
-        <h2 className="font-semibold">{data.user.name}</h2>
+      <div className="flex items-start gap-4 p-4 pb-0">
+        <Link
+          to={`/${params.programId}/users`}
+          className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
+        >
+          <ArrowLeftIcon className="size-5" />
+        </Link>
+
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">{data.user.name}</h2>
+          <span className="inline-block text-sm text-neutral-500">{data.scores.length} Assignments</span>
+        </div>
       </div>
 
       {data.scores.length ? (

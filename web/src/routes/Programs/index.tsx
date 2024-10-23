@@ -36,8 +36,11 @@ function Programs() {
       </div>
 
       <div className="mx-auto size-full max-w-[1920px] overflow-hidden border-neutral-200 bg-white min-[1920px]:border-x">
-        <div className="flex min-h-[52px] items-start justify-between p-4 pb-0">
-          <h2 className="font-semibold">Programs</h2>
+        <div className="flex items-start justify-between p-4 pb-0">
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">Programs</h2>
+            <span className="inline-block text-sm text-neutral-500">{data.programs.length} Programs</span>
+          </div>
 
           <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
             <PlusIcon className="size-5" />

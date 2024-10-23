@@ -23,7 +23,10 @@ function Scorecards() {
   return (
     <>
       <div className="flex items-start justify-between p-4 pb-0">
-        <h2 className="font-semibold">Scorecards</h2>
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Scorecards</h2>
+          <span className="inline-block text-sm text-neutral-500">{data.scorecards.length} Scorecards</span>
+        </div>
 
         {data.canGenerate && (
           <Button

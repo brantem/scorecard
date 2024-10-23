@@ -7,11 +7,11 @@ import {
   redirect,
   type LoaderFunctionArgs,
 } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 
 import { cn } from 'lib/helpers';
 
 import type * as types from 'types/program';
-import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 
 const getRoutes = (programId: string) => [
   { to: `/${programId}`, text: 'Scorecards', exact: true },
@@ -33,7 +33,7 @@ function Program() {
         <div className="flex h-full items-center gap-2 p-2">
           <Link
             to="/"
-            className="flex aspect-square h-full items-center justify-center rounded-lg hover:bg-neutral-100"
+            className="flex aspect-square h-full items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
           >
             <ArrowLeftIcon className="size-5" />
           </Link>

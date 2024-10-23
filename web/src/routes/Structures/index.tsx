@@ -54,8 +54,11 @@ function Structures() {
   return (
     <>
       <div className="relative h-full">
-        <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0 font-semibold">
-          <h2>Structures</h2>
+        <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">Structures</h2>
+            <span className="inline-block text-sm text-neutral-500">{data.structures.length} Structures</span>
+          </div>
 
           {data.structures.length ? (
             <Button
