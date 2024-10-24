@@ -445,10 +445,10 @@ func (h *Handler) scorecards(c *fiber.Ctx) error {
 	}
 	c.Set("X-Total-Count", strconv.Itoa(len(result.Nodes)))
 
-	if users, err := h.getUsers(c.UserContext(), userIds); err == nil {
-		for _, node := range result.Nodes {
-			node.User = users[node.UserID]
-		}
+	users, _ := h.getUsers(c.UserContext(), userIds)
+	for _, node := range result.Nodes {
+		node.User = users[node.UserID]
+		node.IsInQueue = h.generator.IsInQueue(node.ID)
 	}
 
 	result.Stats = h.generator.Stats()
@@ -457,19 +457,17 @@ func (h *Handler) scorecards(c *fiber.Ctx) error {
 }
 
 func (h *Handler) scorecard(c *fiber.Ctx) error {
-	type Scorecard struct {
-		model.Scorecard
-		IsInQueue bool `json:"isInQueue"`
-	}
-
 	var result struct {
-		Scorecard *Scorecard `json:"scorecard"`
-		Error     any        `json:"error"`
+		Scorecard *model.Scorecard `json:"scorecard"`
+		Error     any              `json:"error"`
 	}
 
 	scorecardID, _ := c.ParamsInt("scorecardId")
 
-	scorecard := model.Scorecard{Items: []*model.ScorecardItem{}}
+	scorecard := model.Scorecard{
+		Items:     []*model.ScorecardItem{},
+		IsInQueue: h.generator.IsInQueue(scorecardID),
+	}
 	err := h.db.QueryRowxContext(c.UserContext(), `
 		SELECT id, user_id, score, is_outdated, generated_at
 		FROM scorecards
@@ -485,10 +483,7 @@ func (h *Handler) scorecard(c *fiber.Ctx) error {
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
-	result.Scorecard = &Scorecard{
-		Scorecard: scorecard,
-		IsInQueue: h.generator.IsInQueue(scorecardID),
-	}
+	result.Scorecard = &scorecard
 
 	var wg sync.WaitGroup
 

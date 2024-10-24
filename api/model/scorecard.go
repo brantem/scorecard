@@ -20,6 +20,7 @@ type Scorecard struct {
 	Score       float64          `json:"score"`
 	Items       []*ScorecardItem `json:"items"`
 	IsOutdated  bool             `json:"isOutdated" db:"is_outdated"`
+	IsInQueue   bool             `json:"isInQueue"`
 	GeneratedAt Time             `json:"generatedAt" db:"generated_at"`
 }
 

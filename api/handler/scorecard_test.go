@@ -318,7 +318,7 @@ func Test_scorecards(t *testing.T) {
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 	assert.Equal(t, "1", resp.Header.Get("X-Total-Count"))
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"stats":{"inQueue":0},"nodes":[{"id":1,"user":{"id":1,"name":"User 1"},"score":100,"items":null,"isOutdated":false,"generatedAt":"2024-01-01T00:00:00Z"}],"error":null}`, string(body))
+	assert.Equal(t, `{"stats":{"inQueue":0},"nodes":[{"id":1,"user":{"id":1,"name":"User 1"},"score":100,"items":null,"isOutdated":false,"isInQueue":false,"generatedAt":"2024-01-01T00:00:00Z"}],"error":null}`, string(body))
 }
 
 func Test_scorecard(t *testing.T) {
@@ -350,5 +350,5 @@ func Test_scorecard(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"scorecard":{"id":2,"user":{"id":1,"name":"User 1"},"score":100,"items":[{"structureId":1,"score":100}],"isOutdated":false,"generatedAt":"2024-01-01T00:00:00Z","isInQueue":false},"error":null}`, string(body))
+	assert.Equal(t, `{"scorecard":{"id":2,"user":{"id":1,"name":"User 1"},"score":100,"items":[{"structureId":1,"score":100}],"isOutdated":false,"isInQueue":false,"generatedAt":"2024-01-01T00:00:00Z"},"error":null}`, string(body))
 }
