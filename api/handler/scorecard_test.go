@@ -62,28 +62,51 @@ func Test_getScorecardStructureSyllabuses(t *testing.T) {
 }
 
 func Test_scorecardStructures(t *testing.T) {
-	db, mock := db.New()
-	h := New(db, nil)
+	assert := assert.New(t)
 
-	mock.ExpectQuery("SELECT .+ FROM scorecard_structures").
-		WithArgs(1, 1, 1).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "parent_id", "title", "syllabus_id"}).AddRow(1, nil, "Structure 1", 1))
+	t.Run("HEAD", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
 
-	mock.ExpectQuery("SELECT .+ FROM syllabuses .+ WHERE s.id IN (?)").
-		WithArgs(1).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "is_assignment"}).AddRow(1, "Syllabus 1", false))
+		mock.ExpectQuery(`SELECT COUNT\(id\) FROM scorecard_structures`).
+			WithArgs(1).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	app := fiber.New()
-	h.Register(app, middleware.New())
+		app := fiber.New()
+		h.Register(app, middleware.New())
 
-	req := httptest.NewRequest("GET", "/v1/programs/1/scorecards/structures?depth=1", nil)
+		req := httptest.NewRequest("HEAD", "/v1/programs/1/scorecards/structures", nil)
 
-	resp, _ := app.Test(req)
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-	assert.Equal(t, "1", resp.Header.Get("X-Total-Count"))
-	body, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, `{"nodes":[{"id":1,"parentId":null,"title":"Structure 1","syllabus":{"id":1,"title":"Syllabus 1","isAssignment":false}}],"error":null}`, string(body))
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+	})
+
+	t.Run("success", func(t *testing.T) {
+		db, mock := db.New()
+		h := New(db, nil)
+
+		mock.ExpectQuery("SELECT .+ FROM scorecard_structures").
+			WithArgs(1, 1, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "parent_id", "title", "syllabus_id"}).AddRow(1, nil, "Structure 1", 1))
+
+		mock.ExpectQuery("SELECT .+ FROM syllabuses .+ WHERE s.id IN (?)").
+			WithArgs(1).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "title", "is_assignment"}).AddRow(1, "Syllabus 1", false))
+
+		app := fiber.New()
+		h.Register(app, middleware.New())
+
+		req := httptest.NewRequest("GET", "/v1/programs/1/scorecards/structures?depth=1", nil)
+
+		resp, _ := app.Test(req)
+		assert.Nil(mock.ExpectationsWereMet())
+		assert.Equal(fiber.StatusOK, resp.StatusCode)
+		assert.Equal("1", resp.Header.Get("X-Total-Count"))
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(`{"nodes":[{"id":1,"parentId":null,"title":"Structure 1","syllabus":{"id":1,"title":"Syllabus 1","isAssignment":false}}],"error":null}`, string(body))
+	})
 }
 
 func Test_copySyllabusesIntoStructures(t *testing.T) {
