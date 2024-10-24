@@ -13,6 +13,8 @@ import (
 
 type GeneratorInterface interface {
 	Start()
+	Stats() *GeneratorStats
+	IsInQueue(scorecardID int) bool
 	Enqueue(ctx context.Context, programID, userID, scorecardID int)
 }
 
@@ -21,10 +23,16 @@ type Generator struct {
 
 	queue taskq.Queue
 	task  *taskq.Task
+
+	scorecardIds map[int]bool
 }
 
 func NewGenerator(db *sqlx.DB) GeneratorInterface {
-	return &Generator{db: db}
+	return &Generator{
+		db: db,
+
+		scorecardIds: make(map[int]bool),
+	}
 }
 
 func (g *Generator) Start() {
@@ -41,10 +49,30 @@ func (g *Generator) Start() {
 	})
 }
 
+type GeneratorStats struct {
+	InQueue uint32 `json:"inQueue"`
+}
+
+func (g *Generator) Stats() *GeneratorStats {
+	stats := g.queue.Consumer().Stats()
+	return &GeneratorStats{
+		InQueue: stats.Buffered + stats.InFlight,
+	}
+}
+
+func (g *Generator) IsInQueue(scorecardID int) bool {
+	_, ok := g.scorecardIds[scorecardID]
+	return ok
+}
+
 func (g *Generator) Enqueue(ctx context.Context, programID, userID, scorecardID int) {
 	msg := g.task.WithArgs(ctx, programID, userID, scorecardID)
 	if err := g.queue.Add(msg); err != nil {
 		log.Error().Err(err).Msg("scorecard.Generator.Enqueue")
+	}
+
+	if scorecardID != 0 {
+		g.scorecardIds[scorecardID] = true
 	}
 }
 
@@ -118,6 +146,7 @@ func (g *Generator) generate(programID, userID, scorecardID int) error {
 	wg.Wait()
 
 	if len(structures) == 0 || len(assignments) == 0 {
+		delete(g.scorecardIds, scorecardID)
 		return nil
 	}
 
@@ -189,5 +218,6 @@ func (g *Generator) generate(programID, userID, scorecardID int) error {
 
 	tx.Commit()
 
+	delete(g.scorecardIds, scorecardID)
 	return nil
 }

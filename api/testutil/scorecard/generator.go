@@ -2,6 +2,8 @@ package scorecard
 
 import (
 	"context"
+
+	"github.com/brantem/scorecard/scorecard"
 )
 
 type Generator struct {
@@ -15,6 +17,14 @@ func NewGenerator() *Generator {
 }
 
 func (g *Generator) Start() {}
+
+func (g *Generator) Stats() *scorecard.GeneratorStats {
+	return &scorecard.GeneratorStats{}
+}
+
+func (g *Generator) IsInQueue(scorecardID int) bool {
+	return false
+}
 
 func (g *Generator) Enqueue(ctx context.Context, programID, userID, scorecardID int) {
 	g.EnqueueProgramID = append(g.EnqueueProgramID, programID)

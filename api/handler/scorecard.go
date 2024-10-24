@@ -10,6 +10,7 @@ import (
 
 	"github.com/brantem/scorecard/constant"
 	"github.com/brantem/scorecard/model"
+	"github.com/brantem/scorecard/scorecard"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -390,8 +391,9 @@ func (h *Handler) generateScorecards(c *fiber.Ctx) error {
 
 func (h *Handler) scorecards(c *fiber.Ctx) error {
 	var result struct {
-		Nodes []*model.Scorecard `json:"nodes"`
-		Error any                `json:"error"`
+		Stats *scorecard.GeneratorStats `json:"stats"`
+		Nodes []*model.Scorecard        `json:"nodes"`
+		Error any                       `json:"error"`
 	}
 	result.Nodes = []*model.Scorecard{}
 
@@ -427,13 +429,20 @@ func (h *Handler) scorecards(c *fiber.Ctx) error {
 		}
 	}
 
+	result.Stats = h.generator.Stats()
+
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 func (h *Handler) scorecard(c *fiber.Ctx) error {
+	type Scorecard struct {
+		model.Scorecard
+		IsInQueue bool `json:"isInQueue"`
+	}
+
 	var result struct {
-		Scorecard *model.Scorecard `json:"scorecard"`
-		Error     any              `json:"error"`
+		Scorecard *Scorecard `json:"scorecard"`
+		Error     any        `json:"error"`
 	}
 
 	scorecardID, _ := c.ParamsInt("scorecardId")
@@ -454,7 +463,10 @@ func (h *Handler) scorecard(c *fiber.Ctx) error {
 		result.Error = constant.RespInternalServerError
 		return c.Status(fiber.StatusInternalServerError).JSON(result)
 	}
-	result.Scorecard = &scorecard
+	result.Scorecard = &Scorecard{
+		Scorecard: scorecard,
+		IsInQueue: h.generator.IsInQueue(scorecardID),
+	}
 
 	var wg sync.WaitGroup
 
