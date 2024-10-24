@@ -57,7 +57,9 @@ function Structures() {
         <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">Structures</h2>
-            <span className="inline-block text-sm text-neutral-500">{data.structures.length} Structures</span>
+            <span className="inline-block text-sm text-neutral-500">
+              Defines how scores are gathered into scorecards
+            </span>
           </div>
 
           {data.structures.length ? (
@@ -73,7 +75,7 @@ function Structures() {
 
         {data.canCreate ? (
           data.structures.length ? (
-            <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-12">
+            <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-16">
               <Tree
                 items={structures}
                 renderOptions={(structure) => (

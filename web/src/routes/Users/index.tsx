@@ -46,7 +46,7 @@ function Users() {
       <div className="flex items-start justify-between p-4 pb-0">
         <div className="flex flex-col gap-1">
           <h2 className="font-semibold">Users</h2>
-          <span className="inline-block text-sm text-neutral-500">{data.users.totalCount} Users</span>
+          <span className="inline-block text-sm text-neutral-500">Manage the users for the program</span>
         </div>
 
         <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
@@ -125,7 +125,8 @@ function Users() {
             </Table>
           </div>
 
-          <div className="mt-4 flex items-center justify-end text-sm">
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <Table.Stats />
             <Table.Pagination />
           </div>
         </Table.Provider>

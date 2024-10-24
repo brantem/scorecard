@@ -49,7 +49,9 @@ function Programs() {
         <div className="flex items-start justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">Programs</h2>
-            <span className="inline-block text-sm text-neutral-500">{data.programs.totalCount} Programs</span>
+            <span className="text-sm text-neutral-500">
+              Each program includes its own users, syllabus, and scorecards
+            </span>
           </div>
 
           <Button className="pl-2.5 text-sm" onClick={() => saveModalRef.current?.open(null)}>
@@ -125,7 +127,8 @@ function Programs() {
             </Table>
           </div>
 
-          <div className="mt-4 flex items-center justify-end text-sm">
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <Table.Stats />
             <Table.Pagination />
           </div>
         </Table.Provider>

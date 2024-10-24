@@ -30,17 +30,25 @@ function UserScores() {
 
   return (
     <>
-      <div className="flex items-start gap-4 p-4 pb-0">
-        <Link
-          to={`/${params.programId}/users`}
-          className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
-        >
-          <ArrowLeftIcon className="size-5" />
-        </Link>
+      <div className="flex flex-col gap-2 p-4 pb-0">
+        <div className="flex items-center gap-1 text-sm text-neutral-500">
+          <Link to={`/${params.programId}/users`} className="hover:underline">
+            Users
+          </Link>
+        </div>
 
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">{data.user.name}</h2>
-          <span className="inline-block text-sm text-neutral-500">{data.scores.length} Assignments</span>
+        <div className="flex gap-4">
+          <Link
+            to={`/${params.programId}/syllabuses`}
+            className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
+          >
+            <ArrowLeftIcon className="size-5" />
+          </Link>
+
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">{data.user.name}</h2>
+            <p className="text-sm text-neutral-500">All assignment scores for this user</p>
+          </div>
         </div>
       </div>
 

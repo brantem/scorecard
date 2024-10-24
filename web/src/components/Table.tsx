@@ -43,8 +43,8 @@ function Table({ children }: { children: React.ReactNode }) {
     <table
       className={cn(
         'w-full table-auto',
-        '[&_tr:has(th)]:bg-neutral-50 [&_tr:has(th)]:text-left [&_tr:has(th)]:text-neutral-900',
-        '[&_tr:not(:has(th))]:border-t [&_tr:not(:has(th))]:border-neutral-200 [&_tr:not(:has(th))]:text-neutral-700',
+        '[&_tr:has(th)]:bg-neutral-50 [&_tr:has(th)]:text-left',
+        '[&_tr:not(:has(th))]:border-t [&_tr:not(:has(th))]:border-neutral-200',
       )}
     >
       {children}
@@ -104,12 +104,16 @@ const Provider = ({
 };
 Table.Provider = Provider;
 
+const Cell = (props: React.ComponentPropsWithoutRef<'div'>) => {
+  return <div {...props} className="flex h-full items-center px-3" />;
+};
+
 type ThProps = React.ComponentPropsWithoutRef<'th'>;
 
 function Th({ className, children, ...props }: ThProps) {
   return (
-    <th className={cn('h-12 whitespace-nowrap py-0 font-medium', className)} {...props}>
-      <div className="flex size-full items-center px-3">{children}</div>
+    <th className={cn('h-12 font-medium', className)} {...props}>
+      <Cell>{children}</Cell>
     </th>
   );
 }
@@ -119,12 +123,33 @@ type TdProps = React.ComponentPropsWithoutRef<'td'>;
 
 function Td({ className, children, ...props }: TdProps) {
   return (
-    <td className={cn('h-12 whitespace-nowrap py-0 text-neutral-700', className)} {...props}>
-      <div className="flex h-full items-center px-3">{children}</div>
+    <td className={cn('h-12', className)} {...props}>
+      <Cell>{children}</Cell>
     </td>
   );
 }
 Table.Td = Td;
+
+const Stats = () => {
+  const { isLoading, totalItems, itemsPerPage, page } = useTable();
+
+  return isLoading ? (
+    <span className="select-none">Loading...</span>
+  ) : totalItems ? (
+    <span className="select-none tabular-nums text-neutral-500">
+      <span className="font-semibold text-black">{(page - 1) * itemsPerPage + 1}</span> to{' '}
+      <span className="font-semibold text-black">
+        {((v) => (totalItems < v ? totalItems : v))(page * itemsPerPage)}
+      </span>{' '}
+      of <span className="font-semibold text-black">{totalItems}</span> items
+    </span>
+  ) : (
+    <span className="select-none tabular-nums text-neutral-500">
+      <span className="font-semibold text-black">0</span> items
+    </span>
+  );
+};
+Table.Stats = Stats;
 
 type PaginationProps = {
   className?: string;

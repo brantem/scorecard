@@ -31,27 +31,30 @@ function SyllabusScores() {
 
   return (
     <>
-      <div className="flex items-start gap-4 p-4 pb-0">
-        <Link
-          to={`/${params.programId}/syllabuses`}
-          className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
-        >
-          <ArrowLeftIcon className="size-5" />
-        </Link>
+      <div className="flex flex-col gap-2 p-4 pb-0">
+        <div className="flex items-center gap-1 text-sm text-neutral-500">
+          <Link to={`/${params.programId}/syllabuses`} className="hover:underline">
+            Syllabuses
+          </Link>
+          {data.syllabus.parents.map((parent) => (
+            <Fragment key={parent.id}>
+              <ChevronRightIcon className="size-4" />
+              <span>{parent.title}</span>
+            </Fragment>
+          ))}
+        </div>
 
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">{data.syllabus.title}</h2>
+        <div className="flex gap-4">
+          <Link
+            to={`/${params.programId}/syllabuses`}
+            className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
+          >
+            <ArrowLeftIcon className="size-5" />
+          </Link>
 
-          <div className="flex items-center gap-1 text-sm text-neutral-500">
-            <Link to="/syllabuses" className="hover:underline">
-              Syllabuses
-            </Link>
-            {data.syllabus.parents.map((parent) => (
-              <Fragment key={parent.id}>
-                <ChevronRightIcon className="size-4" />
-                <span>{parent.title}</span>
-              </Fragment>
-            ))}
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">{data.syllabus.title}</h2>
+            <p className="text-sm text-neutral-500">All user scores for this assignment</p>
           </div>
         </div>
       </div>
@@ -105,7 +108,8 @@ function SyllabusScores() {
             </Table>
           </div>
 
-          <div className="mt-4 flex items-center justify-end text-sm">
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <Table.Stats />
             <Table.Pagination />
           </div>
         </Table.Provider>

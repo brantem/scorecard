@@ -76,7 +76,9 @@ function Syllabuses() {
           <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
             <div className="flex flex-col gap-1">
               <h2 className="font-semibold">Structures</h2>
-              <span className="inline-block text-sm text-neutral-500">{data.structures.length} Structures</span>
+              <span className="inline-block text-sm text-neutral-500">
+                The hierarchy pattern that defines how content is organized
+              </span>
             </div>
 
             {data.structures.length && !isStructuresLocked ? (
@@ -168,7 +170,9 @@ function Syllabuses() {
           <div className="absolute left-0 right-0 top-0 flex items-start justify-between gap-4 p-4 pb-0">
             <div className="flex flex-col gap-1">
               <h2 className="font-semibold">Syllabuses</h2>
-              <span className="inline-block text-sm text-neutral-500">{data.syllabuses.length} Syllabuses</span>
+              <span className="inline-block text-sm text-neutral-500">
+                Content organized according to the defined structure
+              </span>
             </div>
 
             {data.syllabuses.length ? (
@@ -186,7 +190,7 @@ function Syllabuses() {
 
           {data.structures.length ? (
             data.syllabuses.length ? (
-              <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-12">
+              <div className="no-scrollbar flex size-full flex-col items-center overflow-y-auto p-4 pt-16">
                 <Tree
                   items={syllabuses}
                   renderOptions={(syllabus) => (

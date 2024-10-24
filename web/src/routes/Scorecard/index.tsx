@@ -1,11 +1,13 @@
 import {
+  Link,
+  useParams,
   useLoaderData,
   useFetcher,
   redirect,
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
 } from 'react-router-dom';
-import { ArrowPathIcon } from '@heroicons/react/20/solid';
+import { ArrowLeftIcon, ArrowPathIcon } from '@heroicons/react/20/solid';
 import { InformationCircleIcon } from '@heroicons/react/16/solid';
 import dayjs from 'dayjs';
 
@@ -15,6 +17,7 @@ import Tooltip from 'components/Tooltip';
 import type * as types from 'types/scorecard';
 
 function Scorecard() {
+  const params = useParams();
   const data = useLoaderData() as { scorecard: types.Scorecard; structures: Omit<types.Structure, 'syllabus'>[] };
   const fetcher = useFetcher();
 
@@ -35,28 +38,45 @@ function Scorecard() {
 
   return (
     <>
-      <div className="flex items-start justify-between p-4 pb-0">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">{data.scorecard.user.name}</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500">
-              {dayjs(data.scorecard.generatedAt).format('D MMM YYYY HH:mm')}
-            </span>
-            {data.scorecard.isOutdated && (
-              <Tooltip content="This scorecard needs to be regenerated." side="right">
-                <InformationCircleIcon className="size-4 text-yellow-500" />
-              </Tooltip>
-            )}
-          </div>
+      <div className="flex flex-col gap-2 p-4 pb-0">
+        <div className="flex items-center gap-1 text-sm text-neutral-500">
+          <Link to={`/${params.programId}/scorecards`} className="hover:underline">
+            Scorecards
+          </Link>
         </div>
 
-        <Button
-          className="pl-2.5 text-sm"
-          onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
-        >
-          <ArrowPathIcon className="size-5" />
-          <span>Generate</span>
-        </Button>
+        <div className="flex items-start justify-between">
+          <div className="flex gap-4">
+            <Link
+              to={`/${params.programId}/scorecards`}
+              className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
+            >
+              <ArrowLeftIcon className="size-5" />
+            </Link>
+
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold">{data.scorecard.user.name}</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-neutral-500">
+                  {dayjs(data.scorecard.generatedAt).format('D MMM YYYY HH:mm')}
+                </span>
+                {data.scorecard.isOutdated && (
+                  <Tooltip content="This scorecard needs to be regenerated." side="right">
+                    <InformationCircleIcon className="size-4 text-yellow-500" />
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Button
+            className="pl-2.5 text-sm"
+            onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+          >
+            <ArrowPathIcon className="size-5" />
+            <span>Generate</span>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-4">

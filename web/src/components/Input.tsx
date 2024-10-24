@@ -9,7 +9,7 @@ type InputProps = React.ComponentPropsWithoutRef<'input'> & {
 export default forwardRef<HTMLInputElement, InputProps>(function Input({ className, label, error, ...props }, ref) {
   return (
     <label className="flex w-full flex-col gap-1">
-      <span className="font-medium text-neutral-900">
+      <span className="font-medium">
         {label}
         {props.required && <span className="ml-1 text-red-500">*</span>}
       </span>

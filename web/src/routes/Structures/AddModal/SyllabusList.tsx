@@ -80,7 +80,7 @@ export default function SyllabusList({ parentId, onCompleted }: SyllabusListProp
                 {syllabus.title}
               </button>
               <Button
-                className="m-1.5 bg-neutral-100 px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-900 hover:text-white"
+                className="m-1.5 bg-neutral-100 px-3 py-1.5 text-sm text-black hover:bg-neutral-900 hover:text-white"
                 onClick={() => {
                   fetcher.submit(
                     { type: 'COPY', _syllabusId: syllabus.id, parentId },
