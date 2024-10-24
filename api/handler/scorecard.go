@@ -64,6 +64,23 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 	programID, _ := c.ParamsInt("programId")
 	depth := c.QueryInt("depth")
 
+	if c.Method() == fiber.MethodHead {
+		var totalCount int
+		err := h.db.QueryRowxContext(c.UserContext(), `
+			SELECT COUNT(id)
+			FROM scorecard_structures
+			WHERE program_id = ?
+		`, programID).Scan(&totalCount)
+		if err != nil {
+			log.Error().Err(err).Msg("scorecard.scorecardStructures")
+			result.Error = constant.RespInternalServerError
+			return c.Status(fiber.StatusInternalServerError).JSON(result)
+		}
+		c.Set("X-Total-Count", strconv.Itoa(totalCount))
+
+		return c.SendStatus(fiber.StatusOK)
+	}
+
 	rows, err := h.db.QueryxContext(c.UserContext(), `
 		WITH RECURSIVE t AS (
 		  SELECT *, 1 AS depth
@@ -340,6 +357,11 @@ func (h *Handler) generateScorecards(c *fiber.Ctx) error {
 	var result struct {
 		Success bool `json:"success"`
 		Error   any  `json:"error"`
+	}
+
+	if stats := h.generator.Stats(); stats.InQueue != 0 {
+		result.Success = true
+		return c.Status(fiber.StatusOK).JSON(result)
 	}
 
 	programID, _ := c.ParamsInt("programId")
