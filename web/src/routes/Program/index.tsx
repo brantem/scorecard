@@ -75,7 +75,7 @@ Program.loader = async ({ params }: LoaderFunctionArgs) => {
     if (!program) return redirect('/');
     return { program };
   } catch {
-    return { program: null };
+    return redirect('/');
   }
 };
 
