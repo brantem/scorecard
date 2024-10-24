@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useRef, useState, useImperativeHandle } from 'react';
 import { PencilSquareIcon, DocumentDuplicateIcon } from '@heroicons/react/20/solid';
 
 import Modal from 'components/Modal';
@@ -13,6 +13,8 @@ export type AddModalHandle = {
 };
 
 export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
+  const initialFocusRef = useRef<HTMLElement>(null);
+
   const [isManual, setIsManual] = useState<boolean | null>(null);
   const [data, setData] = useState<{ parent: Structure | null } | null>(null);
 
@@ -46,6 +48,7 @@ export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
       {typeof isManual === 'boolean' ? (
         isManual ? (
           <SaveForm
+            initialFocusRef={initialFocusRef}
             parentId={data?.parent?.id || null}
             structure={null}
             onCompleted={() => {
@@ -66,7 +69,10 @@ export default forwardRef<AddModalHandle>(function AddModal(_, ref) {
         <div className="mt-4 flex w-full items-center gap-4">
           <Button
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-neutral-900 text-sm"
-            onClick={() => setIsManual(true)}
+            onClick={() => {
+              setIsManual(true);
+              setTimeout(() => initialFocusRef.current?.focus(), 0);
+            }}
           >
             <PencilSquareIcon className="size-5" />
             <span>Manual</span>

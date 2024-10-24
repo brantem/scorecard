@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef } from 'react';
 import { useFetcher } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import * as v from 'valibot';
@@ -9,6 +9,7 @@ import Modal from 'components/Modal';
 import Input from 'components/Input';
 
 import type { Structure, Syllabus } from 'types/syllabus';
+import { withMergedRefs } from 'lib/helpers';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
@@ -27,6 +28,8 @@ export type SaveSyllabusModalHandle = {
 export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [data, setData] = useState<Data | null>(null);
 
   const { register, handleSubmit, formState, setError, setValue, reset } = useForm({
@@ -38,6 +41,7 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
     open(structure, parent, syllabus) {
       setData({ structure, parent, syllabus });
       if (syllabus) setValue('title', syllabus.title);
+      setTimeout(() => inputRef.current?.focus(), 0);
     },
   }));
 
@@ -86,7 +90,13 @@ export default forwardRef<SaveSyllabusModalHandle>(function SaveSyllabusModal(_,
           );
         })}
       >
-        <Input label="Title" {...register('title')} error={formState.errors.title?.message} required autoFocus />
+        <Input
+          label="Title"
+          {...withMergedRefs(register('title'), inputRef)}
+          error={formState.errors.title?.message}
+          required
+          autoFocus
+        />
 
         <Button type="submit" className="mt-4 h-12 w-full" disabled={!formState.isValid}>
           Save

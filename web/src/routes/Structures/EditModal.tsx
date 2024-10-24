@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useRef, useState, useImperativeHandle } from 'react';
 
 import Modal from 'components/Modal';
 import SaveForm from './SaveForm';
@@ -10,11 +10,14 @@ export type EditModalHandle = {
 };
 
 export default forwardRef<EditModalHandle>(function EditModal(_, ref) {
+  const initialFocusRef = useRef<HTMLElement>(null);
+
   const [data, setData] = useState<{ structure: Structure | null } | null>(null);
 
   useImperativeHandle(ref, () => ({
     open(structure) {
       setData({ structure });
+      setTimeout(() => initialFocusRef.current?.focus(), 0);
     },
   }));
 
@@ -22,6 +25,7 @@ export default forwardRef<EditModalHandle>(function EditModal(_, ref) {
     <Modal title="Edit Structure" isOpen={!!data} onClose={() => setData(null)}>
       {data?.structure && (
         <SaveForm
+          initialFocusRef={initialFocusRef}
           parentId={data.structure.parentId || null}
           structure={data.structure}
           onCompleted={() => setData(null)}

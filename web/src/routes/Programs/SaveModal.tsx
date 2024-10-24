@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef } from 'react';
 import { useFetcher } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import * as v from 'valibot';
@@ -9,6 +9,7 @@ import Modal from 'components/Modal';
 import Input from 'components/Input';
 
 import type { Program } from 'types/program';
+import { withMergedRefs } from 'lib/helpers';
 
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Title is required.'), v.trim()),
@@ -21,6 +22,8 @@ export type SaveModalHandle = {
 export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [data, setData] = useState<{ program: Program | null } | null>(null);
 
   const { register, handleSubmit, formState, setError, setValue, reset } = useForm({
@@ -32,6 +35,7 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
     open(program) {
       setData({ program });
       if (program) setValue('title', program.title);
+      setTimeout(() => inputRef.current?.focus(), 0);
     },
   }));
 
@@ -65,7 +69,13 @@ export default forwardRef<SaveModalHandle>(function SaveModal(_, ref) {
           );
         })}
       >
-        <Input label="Title" {...register('title')} error={formState.errors.title?.message} required autoFocus />
+        <Input
+          label="Title"
+          {...withMergedRefs(register('title'), inputRef)}
+          error={formState.errors.title?.message}
+          required
+          autoFocus
+        />
 
         <Button type="submit" className="mt-4 h-12 w-full" disabled={!formState.isValid}>
           Save

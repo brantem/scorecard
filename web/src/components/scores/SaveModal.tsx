@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef } from 'react';
 import { useFetcher } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import * as v from 'valibot';
@@ -10,6 +10,7 @@ import Input from 'components/Input';
 
 import type { User } from 'types/user';
 import type { BaseSyllabus } from 'types/syllabus';
+import { withMergedRefs } from 'lib/helpers';
 
 const schema = v.object({
   score: v.pipe(v.number(), v.minValue(0, 'Score must be 0 or higher.'), v.maxValue(100, 'Score must not exceed 100')),
@@ -32,6 +33,8 @@ type SaveModalProps = {
 export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ description }, ref) {
   const fetcher = useFetcher<{ success: boolean; error: { code: string } | null }>();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [data, setData] = useState<Data | null>(null);
 
   const { register, handleSubmit, formState, setValue, reset } = useForm({
@@ -44,6 +47,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
       const isEditing = typeof score === 'number';
       setData({ syllabus, user, isEditing });
       if (isEditing) setValue('score', score || 0);
+      setTimeout(() => inputRef.current?.focus(), 0);
     },
   }));
 
@@ -81,7 +85,7 @@ export default forwardRef<SaveModalHandle, SaveModalProps>(function SaveModal({ 
           label="Score"
           type="number"
           step=".01"
-          {...register('score', { valueAsNumber: true })}
+          {...withMergedRefs(register('score', { valueAsNumber: true }), inputRef)}
           error={formState.errors.score?.message}
           required
           autoFocus
