@@ -20,6 +20,7 @@ export type Scorecard = {
   score: number;
   items: ScorecardItem[];
   isOutdated: boolean;
+  isInQueue: boolean;
   generatedAt: string;
 };
 

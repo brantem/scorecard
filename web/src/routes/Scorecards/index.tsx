@@ -15,9 +15,14 @@ import Tooltip from 'components/Tooltip';
 
 import type { Scorecard as _Scorecard } from 'types/scorecard';
 
+type Stats = {
+  canGenerate: boolean;
+  inQueue: boolean;
+};
+
 function Scorecards() {
   const params = useParams();
-  const data = useLoaderData() as { canGenerate: boolean; scorecards: Omit<_Scorecard, 'items'>[] };
+  const data = useLoaderData() as { stats: Stats; scorecards: Omit<_Scorecard, 'items'>[] };
   const fetcher = useFetcher();
 
   return (
@@ -28,18 +33,25 @@ function Scorecards() {
           <span className="inline-block text-sm text-neutral-500">All scorecards generated for this program</span>
         </div>
 
-        {data.canGenerate && (
-          <Button
-            className="pl-2.5 text-sm"
-            onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
-          >
-            <ArrowPathIcon className="size-5" />
-            <span>Generate</span>
-          </Button>
+        {data.stats.canGenerate && (
+          <div className="flex items-center gap-2">
+            {data.stats.inQueue ? (
+              <div className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">
+                In Queue: <b>{data.stats.inQueue}</b>
+              </div>
+            ) : null}
+            <Button
+              className="pl-2.5 text-sm"
+              onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+            >
+              <ArrowPathIcon className="size-5" />
+              <span>Generate</span>
+            </Button>
+          </div>
         )}
       </div>
 
-      {data.canGenerate ? (
+      {data.stats.canGenerate ? (
         <div className="m-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {data.scorecards.map((scorecard) => (
             <Link
@@ -56,10 +68,16 @@ function Scorecards() {
                   <span className="text-sm text-neutral-500">
                     {dayjs(scorecard.generatedAt).format('D MMM YYYY HH:mm')}
                   </span>
-                  {scorecard.isOutdated && (
-                    <Tooltip content="This scorecard needs to be regenerated." side="right">
-                      <InformationCircleIcon className="size-4 text-yellow-500" />
-                    </Tooltip>
+                  {scorecard.isInQueue ? (
+                    <span className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">
+                      In Queue
+                    </span>
+                  ) : (
+                    scorecard.isOutdated && (
+                      <Tooltip content="This scorecard needs to be regenerated." side="right">
+                        <InformationCircleIcon className="size-4 text-yellow-500" />
+                      </Tooltip>
+                    )
                   )}
                 </div>
               </div>
@@ -92,13 +110,19 @@ Scorecards.loader = async ({ params }: LoaderFunctionArgs) => {
     (async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/v1/programs/${params.programId}/scorecards`);
-        return (await res.json()).nodes;
+        return await res.json();
       } catch {
-        return [];
+        return null;
       }
     })(),
   ]);
-  return { canGenerate, scorecards };
+  return {
+    stats: {
+      ...scorecards.stats,
+      canGenerate,
+    },
+    scorecards: scorecards.nodes,
+  };
 };
 
 Scorecards.action = async ({ request, params }: ActionFunctionArgs) => {

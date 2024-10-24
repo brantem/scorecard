@@ -40,7 +40,7 @@ function Scorecard() {
     <>
       <div className="flex flex-col gap-2 p-4 pb-0">
         <div className="flex items-center gap-1 text-sm text-neutral-500">
-          <Link to={`/${params.programId}/scorecards`} className="hover:underline">
+          <Link to={`/${params.programId}/`} className="hover:underline">
             Scorecards
           </Link>
         </div>
@@ -48,7 +48,7 @@ function Scorecard() {
         <div className="flex items-start justify-between">
           <div className="flex gap-4">
             <Link
-              to={`/${params.programId}/scorecards`}
+              to={`/${params.programId}/`}
               className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
             >
               <ArrowLeftIcon className="size-5" />
@@ -69,13 +69,18 @@ function Scorecard() {
             </div>
           </div>
 
-          <Button
-            className="pl-2.5 text-sm"
-            onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
-          >
-            <ArrowPathIcon className="size-5" />
-            <span>Generate</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {data.scorecard.isInQueue && (
+              <div className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">In Queue</div>
+            )}
+            <Button
+              className="pl-2.5 text-sm"
+              onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+            >
+              <ArrowPathIcon className="size-5" />
+              <span>Generate</span>
+            </Button>
+          </div>
         </div>
       </div>
 
