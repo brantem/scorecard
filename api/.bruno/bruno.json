@@ -2,8 +2,5 @@
   "version": "1",
   "name": "scorecard",
   "type": "collection",
-  "ignore": [
-    "node_modules",
-    ".git"
-  ]
+  "ignore": ["node_modules", ".git"]
 }

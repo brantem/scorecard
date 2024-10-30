@@ -1,0 +1,9 @@
+{
+  "name": "@scorecard/data",
+  "scripts": {
+    "generate": "node generate.js"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.1.0"
+  }
+}
