@@ -2,7 +2,10 @@ package scorecard
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"sync"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -77,6 +80,10 @@ func (g *Generator) Enqueue(ctx context.Context, programID, userID, scorecardID 
 }
 
 func (g *Generator) generate(programID, userID, scorecardID int) error {
+	if v, err := strconv.Atoi(os.Getenv("GENERATOR_DELAY")); err == nil {
+		time.Sleep(time.Duration(v) * time.Millisecond)
+	}
+
 	type ScorecardStructure struct {
 		ID         int
 		ParentID   *int `db:"parent_id"`

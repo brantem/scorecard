@@ -16,6 +16,9 @@ import Tooltip from 'components/Tooltip';
 import type { Scorecard as _Scorecard } from 'types/scorecard';
 import { formatNumber } from 'lib/helpers';
 
+let GENERATOR_DELAY = parseInt(import.meta.env.VITE_GENERATOR_DELAY || '0');
+if (isNaN(GENERATOR_DELAY)) GENERATOR_DELAY = 0;
+
 type Stats = {
   canGenerate: boolean;
   inQueue: boolean;
@@ -40,6 +43,8 @@ function Scorecards() {
               <div className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">
                 In Queue: <b>{data.stats.inQueue}</b>
               </div>
+            ) : GENERATOR_DELAY ? (
+              <span className="text-xs text-neutral-500">Delay: {GENERATOR_DELAY}ms</span>
             ) : null}
             <Button
               className="pl-2.5 text-sm"

@@ -17,6 +17,9 @@ import Tooltip from 'components/Tooltip';
 import type * as types from 'types/scorecard';
 import { formatNumber } from 'lib/helpers';
 
+let GENERATOR_DELAY = parseInt(import.meta.env.VITE_GENERATOR_DELAY || '0');
+if (isNaN(GENERATOR_DELAY)) GENERATOR_DELAY = 0;
+
 function Scorecard() {
   const params = useParams();
   const data = useLoaderData() as { scorecard: types.Scorecard; structures: Omit<types.Structure, 'syllabus'>[] };
@@ -71,9 +74,11 @@ function Scorecard() {
           </div>
 
           <div className="flex items-center gap-2">
-            {data.scorecard.isInQueue && (
+            {data.scorecard.isInQueue ? (
               <div className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">In Queue</div>
-            )}
+            ) : GENERATOR_DELAY ? (
+              <span className="text-xs text-neutral-500">Delay: {GENERATOR_DELAY}ms</span>
+            ) : null}
             <Button
               className="pl-2.5 text-sm"
               onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
