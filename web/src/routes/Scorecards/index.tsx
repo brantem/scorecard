@@ -2,6 +2,7 @@ import {
   Link,
   useParams,
   useLoaderData,
+  useRevalidator,
   useFetcher,
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -27,6 +28,7 @@ type Stats = {
 function Scorecards() {
   const params = useParams();
   const data = useLoaderData() as { stats: Stats; scorecards: Omit<_Scorecard, 'items'>[] };
+  const revalidator = useRevalidator();
   const fetcher = useFetcher();
 
   return (
@@ -48,10 +50,16 @@ function Scorecards() {
             ) : null}
             <Button
               className="pl-2.5 text-sm"
-              onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+              onClick={() => {
+                if (data.stats.inQueue) {
+                  revalidator.revalidate();
+                } else {
+                  fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' });
+                }
+              }}
             >
               <ArrowPathIcon className="size-5" />
-              <span>Generate</span>
+              <span>{data.stats.inQueue ? 'Refresh' : 'Generate'}</span>
             </Button>
           </div>
         )}

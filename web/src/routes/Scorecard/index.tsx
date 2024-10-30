@@ -2,6 +2,7 @@ import {
   Link,
   useParams,
   useLoaderData,
+  useRevalidator,
   useFetcher,
   redirect,
   type LoaderFunctionArgs,
@@ -23,6 +24,7 @@ if (isNaN(GENERATOR_DELAY)) GENERATOR_DELAY = 0;
 function Scorecard() {
   const params = useParams();
   const data = useLoaderData() as { scorecard: types.Scorecard; structures: Omit<types.Structure, 'syllabus'>[] };
+  const revalidator = useRevalidator();
   const fetcher = useFetcher();
 
   const structures = new Map<types.Structure['parentId'], typeof data.structures>();
@@ -81,10 +83,16 @@ function Scorecard() {
             ) : null}
             <Button
               className="pl-2.5 text-sm"
-              onClick={() => fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' })}
+              onClick={() => {
+                if (data.scorecard.isInQueue) {
+                  revalidator.revalidate();
+                } else {
+                  fetcher.submit({ type: 'GENERATE' }, { method: 'POST', encType: 'application/json' });
+                }
+              }}
             >
               <ArrowPathIcon className="size-5" />
-              <span>Generate</span>
+              <span>{data.scorecard.isInQueue ? 'Refresh' : 'Generate'}</span>
             </Button>
           </div>
         </div>
