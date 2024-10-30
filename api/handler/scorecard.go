@@ -151,16 +151,18 @@ func (h *Handler) copySyllabusesIntoStructures(c *fiber.Ctx) error {
 
 	rows, err := h.db.QueryContext(c.UserContext(), `
 		WITH RECURSIVE t AS (
-		  SELECT *
-		  FROM syllabuses
-		  WHERE (? = 0 OR id = ?)
+		  SELECT s.*
+		  FROM syllabuses s
+		  JOIN syllabus_structures ss ON ss.id = s.structure_id
+		  WHERE ss.program_id = ?
+		    AND (? = 0 OR s.id = ?)
 		  UNION ALL
 		  SELECT s.*
 		  FROM syllabuses s
 		  INNER JOIN t ON s.parent_id = t.id
 		)
 		SELECT id, parent_id FROM t
-	`, targetID, targetID)
+	`, programID, targetID, targetID)
 	if err != nil {
 		log.Error().Err(err).Msg("scorecard.copySyllabusesIntoStructures")
 		result.Error = constant.RespInternalServerError

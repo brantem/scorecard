@@ -115,8 +115,8 @@ func Test_copySyllabusesIntoStructures(t *testing.T) {
 	db, mock := db.New()
 	h := New(db, nil)
 
-	mock.ExpectQuery(`.+ SELECT \* FROM syllabuses`).
-		WithArgs(0, 0).
+	mock.ExpectQuery(`.+ SELECT s.\* FROM syllabuses`).
+		WithArgs(1, 0, 0).
 		WillReturnRows(
 			sqlmock.NewRows([]string{"id", "parent_id"}).
 				AddRow(syllabusIds[0], 1).
