@@ -15,6 +15,7 @@ import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
 
 import type * as types from 'types/scorecard';
+import { formatNumber } from 'lib/helpers';
 
 function Scorecard() {
   const params = useParams();
@@ -37,7 +38,7 @@ function Scorecard() {
   });
 
   return (
-    <>
+    <div className="no-scrollbar h-full overflow-y-auto">
       <div className="flex flex-col gap-2 p-4 pb-0">
         <div className="flex items-center gap-1 text-sm text-neutral-500">
           <Link to={`/${params.programId}/`} className="hover:underline">
@@ -108,7 +109,7 @@ function Scorecard() {
                   <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center border-neutral-200 [&:not(:first-child)]:border-t">
                     <span className="col-span-7 pl-2.5">{child.title}</span>
                     <div className="flex h-full items-center border-l border-neutral-200 px-2.5 tabular-nums">
-                      {scores.get(child.id) || 0}
+                      {formatNumber(scores.get(child.id) || 0)}
                     </div>
                   </div>
                 ))}
@@ -116,7 +117,7 @@ function Scorecard() {
                   className="col-start-2 flex h-full items-center justify-center border-l border-neutral-200 px-2.5 tabular-nums"
                   style={{ gridRow: `1 / span ${children.length}` }}
                 >
-                  {scores.get(structure.id)}
+                  {formatNumber(scores.get(structure.id) || 0)}
                 </div>
               </div>
             </div>
@@ -135,7 +136,7 @@ function Scorecard() {
               <div className="grid h-10 grid-cols-[repeat(6,1fr)_90px_90px] items-center border-neutral-200 [&:not(:first-child)]:border-t">
                 <span className="col-span-7 pl-2.5">{structure.title}</span>
                 <div className="flex h-full items-center border-l border-neutral-200 px-2.5 tabular-nums">
-                  {scores.get(structure.id)}
+                  {formatNumber(scores.get(structure.id) || 0)}
                 </div>
               </div>
             ))}
@@ -143,12 +144,12 @@ function Scorecard() {
               className="col-start-2 flex h-full items-center justify-center border-l border-neutral-200 px-2.5 tabular-nums"
               style={{ gridRow: `1 / span ${roots.length}` }}
             >
-              {data.scorecard.score}
+              {formatNumber(data.scorecard.score)}
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

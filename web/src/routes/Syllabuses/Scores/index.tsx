@@ -15,6 +15,7 @@ import Table from 'components/Table';
 import SaveModal, { type SaveModalHandle } from 'components/scores/SaveModal';
 
 import type { BaseSyllabus, Score } from 'types/syllabus';
+import { formatNumber } from 'lib/helpers';
 
 type Syllabus = BaseSyllabus & {
   parents: BaseSyllabus[];
@@ -85,7 +86,11 @@ function SyllabusScores() {
                   <tr key={node.user.id}>
                     <Table.Td>{node.user.name}</Table.Td>
                     <Table.Td className="tabular-nums">
-                      {typeof node.score === 'number' ? node.score : <span className="text-neutral-400">-</span>}
+                      {typeof node.score === 'number' ? (
+                        formatNumber(node.score)
+                      ) : (
+                        <span className="text-neutral-400">-</span>
+                      )}
                     </Table.Td>
 
                     <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">

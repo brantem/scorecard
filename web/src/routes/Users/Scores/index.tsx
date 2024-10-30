@@ -15,6 +15,7 @@ import Button from 'components/Button';
 import SaveModal, { type SaveModalHandle } from 'components/scores/SaveModal';
 
 import type { Score, User } from 'types/user';
+import { formatNumber } from 'lib/helpers';
 
 function UserScores() {
   const params = useParams();
@@ -81,7 +82,11 @@ function UserScores() {
                       <tr key={node.syllabus.id}>
                         <Table.Td>{node.syllabus.title}</Table.Td>
                         <Table.Td className="tabular-nums">
-                          {typeof node.score === 'number' ? node.score : <span className="text-neutral-400">-</span>}
+                          {typeof node.score === 'number' ? (
+                            formatNumber(node.score)
+                          ) : (
+                            <span className="text-neutral-400">-</span>
+                          )}
                         </Table.Td>
 
                         <Table.Td className="text-sm [&>div]:justify-end [&>div]:pr-1.5">

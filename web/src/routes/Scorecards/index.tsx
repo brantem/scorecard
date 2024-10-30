@@ -14,6 +14,7 @@ import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
 
 import type { Scorecard as _Scorecard } from 'types/scorecard';
+import { formatNumber } from 'lib/helpers';
 
 type Stats = {
   canGenerate: boolean;
@@ -60,7 +61,7 @@ function Scorecards() {
               className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200"
             >
               <div className="flex flex-1 items-center justify-center py-16 text-5xl font-black tabular-nums">
-                {scorecard.score}
+                {formatNumber(scorecard.score)}
               </div>
               <div className="border-t border-neutral-200 bg-neutral-50 p-3 group-hover:bg-neutral-100">
                 <h4 className="font-semibold">{scorecard.user.name}</h4>

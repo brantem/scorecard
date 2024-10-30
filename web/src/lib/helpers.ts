@@ -23,3 +23,7 @@ export function withMergedRefs<T>(
 ): React.HTMLProps<T> & { ref: React.Ref<T> } {
   return { ...props, ref: ref ? mergeRefs(ref, ...refs) : mergeRefs(...refs) };
 }
+
+export function formatNumber(v: number) {
+  return Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(v);
+}
