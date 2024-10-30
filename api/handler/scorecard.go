@@ -83,17 +83,18 @@ func (h *Handler) scorecardStructures(c *fiber.Ctx) error {
 
 	rows, err := h.db.QueryxContext(c.UserContext(), `
 		WITH RECURSIVE t AS (
-		  SELECT *, 1 AS depth
+		  SELECT *, rowid, 1 AS depth
 		  FROM scorecard_structures
 		  WHERE program_id = ?
 		    AND parent_id IS NULL
 		  UNION ALL
-		  SELECT ss.*, t.depth + 1
+		  SELECT ss.*, ss.rowid, t.depth + 1
 		  FROM scorecard_structures ss
 		  JOIN t ON ss.parent_id = t.id
 		  WHERE (? = 0 OR t.depth < ?)
 		)
 		SELECT id, parent_id, title, syllabus_id FROM t
+		ORDER BY t.rowid
 	`, programID, depth, depth)
 	if err != nil {
 		log.Error().Err(err).Msg("scorecard.scorecardStructures")

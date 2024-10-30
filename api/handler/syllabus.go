@@ -193,6 +193,7 @@ func (h *Handler) syllabuses(c *fiber.Ctx) error {
 		FROM syllabuses s
 		JOIN syllabus_structures ss ON ss.id = s.structure_id
 		WHERE ss.program_id = ?
+		ORDER BY s.rowid
 	`, c.Params("programId"))
 	if err != nil {
 		log.Error().Err(err).Msg("syllabus.syllabuses")
