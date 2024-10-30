@@ -75,7 +75,7 @@ function Scorecards() {
                     {dayjs(scorecard.generatedAt).format('D MMM YYYY HH:mm')}
                   </span>
                   {scorecard.isInQueue ? (
-                    <span className="rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">
+                    <span className="-my-1 rounded-lg bg-violet-50 px-2 py-1 text-sm font-medium text-violet-500">
                       In Queue
                     </span>
                   ) : (
