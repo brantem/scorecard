@@ -40,7 +40,7 @@ function UserScores() {
 
         <div className="flex gap-4">
           <Link
-            to={`/${params.programId}/syllabuses`}
+            to={`/${params.programId}/users`}
             className="flex aspect-square h-12 items-center justify-center rounded-lg bg-neutral-50 hover:bg-neutral-100"
           >
             <ArrowLeftIcon className="size-5" />
